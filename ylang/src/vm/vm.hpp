@@ -29,11 +29,11 @@ namespace ylang {
 
       std::vector<Chunk> chunks;
 
+      std::stack<Value> stack;
+
       uint8_t memory[kHeapMemorySize] = {0}; 
 
       Register* registers[kRegisterCount];
-
-      std::stack<Value> stack;
 
       void AllocateMemory();
       void AllocateRegisters();

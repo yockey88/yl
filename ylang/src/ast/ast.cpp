@@ -4,6 +4,10 @@
 
 namespace ylang {
 
+  void Ast::Validate() {
+    valid = true;
+  }
+
   void Ast::Walk(TreeWalker& walker) {
     for (auto& node : nodes) {
       node->Accept(walker);

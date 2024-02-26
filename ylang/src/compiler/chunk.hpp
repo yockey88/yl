@@ -90,7 +90,15 @@ struct fmt::formatter<ylang::Operand> : fmt::formatter<std::string_view> {
         val_str = fmt::format(fmt::runtime("{}") , ylang::RegisterStrings[op.val.As<RegisterType>()]);
       } break;
       case OperandType::DIRECT: {
-        val_str = fmt::format(fmt::runtime("{:#08x}") , op.val.As<ylang::address_t>().address);
+        switch (op.val.type) {
+          // case ylang::Value::ADDRESS: {
+          //   val_str = ylang::fmtstr("{:#08x}" , op.val.As<ylang::address_t>().address);
+          // } break;
+          // case ylang::Value::REGISTER: {
+          //   val_str = ylang::fmtstr("{}" , ylang::RegisterStrings[op.val.As<RegisterType>()]);
+          // } break;
+          default: break;
+        }
       } break;
       default: break;
     }

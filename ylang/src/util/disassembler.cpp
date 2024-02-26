@@ -16,45 +16,28 @@ namespace ylang {
     std::string inst = fmt::format(fmt::runtime("{:04x} |") , offset);
 
     switch (opcode.type) {
-      case InstructionType::NOP:
-        SimpleInstruction("NOP", offset);
-      break;
+      case NOP: SimpleInstruction("NOP", offset); break;
 
-      // case PUSH:
-      //   UnaryInstruction("PUSH", offset, opcode.lhs);
-      // break;
+      case PUSH: UnaryInstruction("PUSH", offset, *opcode.lhs); break;
       // case POP:
       //   UnaryInstruction("POP", offset, opcode.lhs);
       // break;
-      case RET:
-        SimpleInstruction("RET", offset);
-      break;
+      case RET: SimpleInstruction("RET", offset); break;
       // case CALL:
       //   UnaryInstruction("CALL", offset, opcode.lhs);
       // break;
-      case NEG:
-        UnaryInstruction("NEG ", offset, *opcode.lhs);
-      break;
+      case NEG: UnaryInstruction("NEG ", offset, *opcode.lhs); break;
 
       // case LEA:
       //   BinaryInstruction("LEA", offset, *opcode.lhs, *opcode.rhs); 
       // break;
 
-      case ADD:
-        BinaryInstruction("ADD ", offset, *opcode.lhs, *opcode.rhs);
-      break;
-      case SUB:
-        BinaryInstruction("SUB ", offset, *opcode.lhs, *opcode.rhs);
-      break;
-      case IMUL:
-        BinaryInstruction("IMUL", offset, *opcode.lhs, *opcode.rhs);
-      break;
-      case DIV:
-        BinaryInstruction("DIV", offset, *opcode.lhs, *opcode.rhs);
-      break;
-      case MOV:
-        BinaryInstruction("MOV ", offset, *opcode.lhs, *opcode.rhs);
-      break;
+      case ADD: SimpleInstruction("ADD ", offset); break;
+      case SUB: SimpleInstruction("SUB ", offset); break;
+      case IMUL: SimpleInstruction("MUL ", offset); break;
+      case DIV: SimpleInstruction("DIV ", offset); break;
+
+      case MOV: BinaryInstruction("MOV ", offset, *opcode.lhs, *opcode.rhs); break;
 
       // case AND:
       //   BinaryInstruction("AND", offset, opcode.lhs, opcode.rhs);

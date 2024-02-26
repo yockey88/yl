@@ -14,18 +14,13 @@ namespace ylang {
   }
 
   VM::~VM() {
-    for (uint8_t reg = 0; reg < kRegisterCount; reg++) {
+    for (uint8_t reg = 0; reg < kWriteableRegisterMax; reg++) {
       delete registers[reg];
     }
   }
 
   void VM::Load(Assembly* assembly) {
     chunks = assembly->chunks;
-
-    const uint8_t* const mem = assembly->ReadMemory();
-    for (uint64_t i = 0; i < kHeapMemorySize; i++) {
-      memory[i] = mem[i];
-    }
   }
 
   void VM::Run() {
@@ -41,7 +36,7 @@ namespace ylang {
 
           ExecuteInstruction();
         } catch (const RuntimeError& e) {
-          printfmt("Error at chunk: {} , instruction: {}\n" , chunk_index, instruction_index);
+          printfmt("Error at chunk: {} , instruction: {}" , chunk_index, instruction_index);
           printerr(ErrorType::RUNTIME , e.what());
           return;
         } catch (std::bad_variant_access& e) {
@@ -51,6 +46,8 @@ namespace ylang {
         }
       }
     }
+
+    printfmt("YVM Exit : {}" , registers[RAX]->Read());
   }
 
   void VM::AllocateMemory() {
@@ -58,7 +55,7 @@ namespace ylang {
   }
 
   void VM::AllocateRegisters() {
-    for (uint8_t reg = 0; reg < kRegisterCount; reg++) {
+    for (uint8_t reg = 0; reg <= kWriteableRegisterMax; reg++) {
       registers[reg] = new Register();
       registers[reg]->type = static_cast<RegisterType>(reg);
     }
@@ -89,20 +86,8 @@ namespace ylang {
   }
   
   void VM::ExecUnaryOp(InstructionType type) {
-    if (instruction->lhs->type == OperandType::IMMEDIATE) {
-      throw RuntimeError("Unary operation on immediate not supported");
-    } else {
-      if (instruction->lhs->type == OperandType::REGISTER) {
-        RegisterType reg = instruction->lhs->val.As<RegisterType>();
-        stack.push(registers[reg]->Read());
-      } else if (instruction->lhs->type == OperandType::DIRECT) {
-        throw RuntimeError("Unary operation on direct memory not supported");
-      } else {
-        throw RuntimeError("Unary operation on memory not supported");
-      }
-    }
-
     switch (type) {
+      case PUSH: ExecPUSH(); break;
       case NEG: ExecNEG(); break;
       default: 
         throw RuntimeError("Unknown unary instruction type");
@@ -127,24 +112,6 @@ namespace ylang {
       return;
     }
 
-    if (instruction->lhs->type == OperandType::IMMEDIATE) {
-      stack.push(instruction->lhs->val);
-    } else if (instruction->lhs->type == OperandType::REGISTER) {
-      RegisterType reg = instruction->lhs->val.As<RegisterType>();
-      stack.push(registers[reg]->Read());
-    } else {
-      throw RuntimeError("ADD into memory not supported");
-    }
-
-    if (instruction->rhs->type == OperandType::IMMEDIATE) {
-      stack.push(instruction->rhs->val);
-    } else if (instruction->rhs->type == OperandType::REGISTER) {
-      RegisterType reg = instruction->rhs->val.As<RegisterType>();
-      stack.push(registers[reg]->Read());
-    } else {
-      throw RuntimeError("ADD into memory not supported");
-    }
-
     switch (type) {
       case ADD: ExecADD(); break;
       case SUB: ExecSUB(); break;
@@ -156,7 +123,7 @@ namespace ylang {
   }
 
   void VM::ExecPUSH() {
-    assert(false && "PUSH is not implemented");
+    stack.push(instruction->lhs->val);
   }
 
   void VM::ExecPOP() {
@@ -164,8 +131,9 @@ namespace ylang {
   }
 
   void VM::ExecRET() {
-    Value val = registers[RAX]->Read();
-    printfmt("RET : {}\n" , val);
+    Value val = stack.top();
+    stack.pop();
+    registers[RAX]->Write(val);
   }
 
   void VM::ExecCALL() {
@@ -178,49 +146,49 @@ namespace ylang {
 
     val.Negate();
 
-    Write(*instruction->lhs, val);
+    stack.push(val);
   }
   
   void VM::ExecLEA() {}
 
   void VM::ExecADD() {
-    Value rval = stack.top();
-    stack.pop();
-
     Value lval = stack.top();
     stack.pop();
 
-    Write(*instruction->lhs, lval + rval);
+    Value rval = stack.top();
+    stack.pop();
+
+    stack.push(lval + rval);
   }
 
   void VM::ExecSUB() {
-    Value rval = stack.top();
-    stack.pop();
-
     Value lval = stack.top();
     stack.pop();
 
-    Write(*instruction->lhs, lval - rval);
+    Value rval = stack.top();
+    stack.pop();
+
+    stack.push(lval - rval);
   }
 
   void VM::ExecIMUL() {
-    Value rval = stack.top();
-    stack.pop();
-
     Value lval = stack.top();
     stack.pop();
 
-    Write(*instruction->lhs, lval * rval);
+    Value rval = stack.top();
+    stack.pop();
+
+    stack.push(lval * rval);
   }
 
   void VM::ExecDIV() {
-    Value rval = stack.top();
-    stack.pop();
-
     Value lval = stack.top();
     stack.pop();
 
-    Write(*instruction->lhs, lval / rval);
+    Value rval = stack.top();
+    stack.pop();
+
+    stack.push(lval / rval);
   }
 
   void VM::ExecMOV() {
@@ -228,10 +196,10 @@ namespace ylang {
       throw RuntimeError("MOV into immediate not supported");
     }
 
-    Value rval = stack.top();
+    Value val = stack.top();
     stack.pop();
 
-    Write(*instruction->lhs, rval);
+    Write(*instruction->lhs, val);
   }
 
   void VM::ExecAND() {
@@ -268,7 +236,11 @@ namespace ylang {
       
   void VM::Write(Operand& op, const Value& val) {
     if (op.type == OperandType::REGISTER) {
-      registers[op.val.As<RegisterType>()]->Write(val);
+      RegisterType reg = op.val.As<RegisterType>();
+      if (reg == RBP || reg == RSP) {
+        throw RuntimeError("Stack unimplemented");
+      }
+      registers[reg]->Write(val);
     } else if (op.type == OperandType::DIRECT) {
       // Write(op.val.As<address_t>(), val);
     } else {

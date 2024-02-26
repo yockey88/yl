@@ -8,24 +8,7 @@
 namespace ylang {
 
   address_t Assembly::Write(Token token) {
-    if (cursor.address + sizeof(uint64_t) > kHeapMemorySize) {
-      printf("Memory overflow\n");
-      return offset;
-    }
-
-    Value val = Value::CreateValue(token);
-    
-    address_t addr = cursor;
-
-    uint8_t* data = reinterpret_cast<uint8_t*>(&val); 
-    for (uint64_t i = 0; i < sizeof(uint64_t); ++i) {
-      memory[cursor.address + i] = data[i];
-    }
-
-    ++offset.address;
-    cursor.address += sizeof(uint64_t);
-
-    return addr;
+    return address_t{0};
   }
       
   Value Assembly::Read(address_t offset) {
@@ -57,10 +40,6 @@ namespace ylang {
       printaddr(address_t{i});
     }
   }
-
-  const uint8_t* const Assembly::ReadMemory() const {
-    return memory;
-  }
       
   void Assembly::printchunk(const Chunk* chunk, const std::string& name) {
     printfmt("=== {} ===", name);
@@ -69,8 +48,6 @@ namespace ylang {
   }
 
   void Assembly::printaddr(address_t addr) {
-    uint64_t val = *reinterpret_cast<uint64_t*>(&memory[addr.address]);
-    printfmt("{:#08x} = {}", addr , val);
   }
 
 } // namespace ylang

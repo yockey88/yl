@@ -69,4 +69,19 @@ namespace ylang {
     return expr->Emit();
   }
 
+  VarExpr::~VarExpr() {}
+
+  std::string VarExpr::ToString() const {
+    constexpr std::string_view fmt = "({})";
+    return fmt::format(fmt::runtime(fmt) , name.value);
+  }
+
+  void VarExpr::Accept(TreeWalker& walker) {
+    walker.Visit(*this);
+  }
+
+  std::vector<Instruction> VarExpr::Emit() {
+    return {};
+  }
+
 } // namespace ylang

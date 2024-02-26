@@ -17,8 +17,12 @@ TEST_F(ValueTests , arithmetic_test_add_ints) {
   ylang::printfmt("Value2 : {}", value2);
   ylang::printfmt("Result : {}", result);
 
-  ASSERT_EQ(result.type, ylang::Value::Type::U16);
-  ASSERT_EQ((uint32_t)result.size , ylang::WORD);
+  ASSERT_EQ(result.type, ylang::Value::Type::U16)
+    << "Expected : " << ylang::kValueStrings[ylang::Value::Type::U16]
+    << " Actual : " << ylang::kValueStrings[result.type];
+  ASSERT_EQ((uint32_t)result.size , ylang::WORD)
+    << "Expected : " << ylang::WordSizeStrings[ylang::WORD]
+    << " Actual : " << ylang::WordSizeStrings[result.size];
 
   ASSERT_NO_THROW(result.As<uint16_t>());
   EXPECT_EQ(result.As<uint16_t>(), 123 + 456);
@@ -35,8 +39,12 @@ TEST_F(ValueTests , arithmetic_test_add_ints) {
   ylang::printfmt("Value4 : {}", value4);
   ylang::printfmt("Result2 : {}", result2);
 
-  ASSERT_EQ(result2.type, ylang::Value::Type::U32);
-  ASSERT_EQ((uint32_t)result2.size , ylang::DWORD);
+  ASSERT_EQ(result2.type, ylang::Value::Type::U32)
+    << "Expected : " << ylang::kValueStrings[ylang::Value::Type::U32]
+    << " Actual : " << ylang::kValueStrings[result2.type];
+  ASSERT_EQ((uint32_t)result2.size , ylang::DWORD)
+    << "Expected : " << ylang::WordSizeStrings[ylang::DWORD]
+    << " Actual : " << ylang::WordSizeStrings[result2.size];
 
   ASSERT_NO_THROW(result2.As<uint32_t>());
   EXPECT_EQ(result2.As<uint32_t>(), 123456789 + 987654321);
@@ -58,7 +66,9 @@ TEST_F(ValueTests , arithmetic_test_add_opp_sign_ints) {
   ASSERT_EQ(result.type, ylang::Value::Type::I16)
     << "Expected : " << ylang::kValueStrings[ylang::Value::Type::I16]
     << " , Actual : " << ylang::kValueStrings[result.type];
-  ASSERT_EQ((uint32_t)result.size , ylang::WORD);
+  ASSERT_EQ((uint32_t)result.size , ylang::WORD)
+    << "Expected : " << ylang::WordSizeStrings[ylang::WORD]
+    << " , Actual : " << ylang::WordSizeStrings[result.size];
 
   ASSERT_NO_THROW(result.As<int16_t>());
   EXPECT_EQ(result.As<int16_t>(), 123 - 456);
@@ -75,13 +85,15 @@ TEST_F(ValueTests , arithmetic_test_add_opp_sign_ints) {
   ylang::printfmt("Value4 : {}", value4);
   ylang::printfmt("Result2 : {}", result2);
 
-  ASSERT_EQ(result2.type, ylang::Value::Type::I32)
-    << "Expected : " << ylang::kValueStrings[ylang::Value::Type::I32]
+  ASSERT_EQ(result2.type, ylang::Value::Type::U32)
+    << "Expected : " << ylang::kValueStrings[ylang::Value::Type::U32]
     << " , Actual : " << ylang::kValueStrings[result2.type];
-  ASSERT_EQ((uint32_t)result2.size , ylang::DWORD);
+  ASSERT_EQ((uint32_t)result2.size , ylang::DWORD)
+    << "Expected : " << ylang::WordSizeStrings[ylang::DWORD]
+    << " , Actual : " << ylang::WordSizeStrings[result2.size];
 
-  ASSERT_NO_THROW(result2.As<int32_t>());
-  EXPECT_EQ(result2.As<int32_t>(), -123456789 + 987654321);
+  ASSERT_NO_THROW(result2.As<uint32_t>());
+  EXPECT_EQ(result2.As<uint32_t>(), -123456789 + 987654321);
 }
 
 TEST_F(ValueTests , arithmetic_test_add_sints) {

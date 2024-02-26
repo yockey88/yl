@@ -20,8 +20,6 @@ namespace ylang {
       void Dump();
       void DumpMemory();
 
-      const uint8_t* const ReadMemory() const;
-
       /// produce the assembly file from the chunks and memory
       template <typename OS>
       OS& WriteTo(OS& os) {
@@ -30,9 +28,7 @@ namespace ylang {
       }
 
     private:
-      address_t offset{ 0 };
       address_t cursor{ 0 };
-      uint8_t memory[kHeapMemorySize] = {0}; 
 
       void printchunk(const Chunk* chunk, const std::string& name);
       void printaddr(address_t addr);

@@ -11,6 +11,7 @@ namespace ylang {
   class UnaryExpr;
   class BinaryExpr;
   class GroupingExpr;
+  class VarExpr;
 
   class ExprStmt;
   class VarDeclStmt;
@@ -25,6 +26,7 @@ namespace ylang {
       virtual void Visit(UnaryExpr& expr) = 0;
       virtual void Visit(BinaryExpr& expr) = 0;
       virtual void Visit(GroupingExpr& stmt) = 0;
+      virtual void Visit(VarExpr& stmt) = 0;
 
       // Statements
       virtual void Visit(ExprStmt& stmt) = 0;

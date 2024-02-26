@@ -24,6 +24,14 @@ local function ProjectHeader(project_data)
 end
 
 local function ProcessProjectComponents(project)
+  if project.components == nil then
+    return
+  end
+
+  for lib, comp in pairs(project.components) do
+    links { lib }
+    includedirs { comp }
+  end
 end
 
 local function ProcessConfigurations(project , external)

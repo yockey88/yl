@@ -58,7 +58,7 @@ end
 
 local function AddSource(config)
   print("[ Processing source code ]")
-  AddDependencies(External)
+  AddDependencies()
 
   if config.groups ~= nil and config.project_folders == nil and config.project == nil then
     ProcessGroups(config.groups)

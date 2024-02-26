@@ -33,6 +33,12 @@ namespace ylang {
     START,
 
     // keywords
+    BOOL , 
+    CHAR , STRING ,
+    SINTEGER , INTEGER ,
+    I8 , I16 , I32 , I64,
+    U8 , U16 , U32 , U64,
+    F32 , F64,
     TRUE, FALSE,
     RETURN ,  
 
@@ -40,12 +46,6 @@ namespace ylang {
     IDENTIFIER,
 
     //literals 
-    BOOL , 
-    CHAR , STRING ,
-    SINTEGER , INTEGER ,
-    I8 , I16 , I32 , I64,
-    U8 , U16 , U32 , U64,
-    F32 , F64,
     FLOAT,
     DOUBLE,
     ADDRESS,
@@ -73,6 +73,7 @@ namespace ylang {
     UNARY_EXPR,
     BINARY_EXPR,
     GROUPING_EXPR,
+    VAR_EXPR,
   
     EXPRESSION_STMT,
     VAR_DECL_STMT,
@@ -116,16 +117,6 @@ namespace ylang {
   
     NUM_ERROR_TYPES
   };
-
-  constexpr uint8_t kQWordCode = 0;
-  constexpr uint8_t kDWordCode = 1;
-  constexpr uint8_t kWordCode = 2;
-  constexpr uint8_t kByteCode = 3;
-
-  constexpr uint8_t kQWordMask = 0x0;
-  constexpr uint8_t kDWordMask = 0x1;
-  constexpr uint8_t kWordMask = 0x2;
-  constexpr uint8_t kByteMask = 0x3;
   
   enum RegisterType : uint8_t {
     RAX = 0x00 ,  
@@ -134,15 +125,15 @@ namespace ylang {
     RDX = 0x03 , 
     RSI = 0x04 , 
     RDI = 0x05 , 
-    RBP = 0x06 , 
-    R8 = 0x07 , 
-    R9 = 0x08 , 
-    R10 = 0x09 , 
-    R11 = 0x0A , 
-    R12 = 0x0B , 
-    R13 = 0x0C , 
-    R14 = 0x0D , 
-    R15 = 0x0E  , 
+    R8 = 0x06 , 
+    R9 = 0x07 , 
+    R10 = 0x08 , 
+    R11 = 0x09 , 
+    R12 = 0x0A , 
+    R13 = 0x0B , 
+    R14 = 0x0C , 
+    R15 = 0x0D , 
+    RBP = 0x0E , 
     RSP = 0x0F ,
     RIP = 0x10 ,
   };
@@ -172,8 +163,12 @@ namespace ylang {
   enum class ExitCode { OK = 0, ERR = 1 };
   
   constexpr uint8_t kBitsInByte = 8;
+
   constexpr uint8_t kDigitCount = 10;
+
+  constexpr uint8_t kWriteableRegisterMax = RegisterType::RBP;
   constexpr static uint8_t kRegisterCount = RegisterType::RIP + 1;
+
   constexpr static uint8_t kRegisterMemorySize = QWORD * kBitsInByte;
   constexpr static uint32_t kHeapMemorySize = 0xFFFF;
   
@@ -181,17 +176,17 @@ namespace ylang {
   constexpr std::array<std::string_view, kTokenTypeCount> TokenTypeStrings = {
     "START",
 
+    "BOOL",
+    "CHAR", "STRING",
+    "I8", "I16", "I32", "I64",
+    "U8", "U16", "U32", "U64",
+    "F32", "F64",
     "TRUE", "FALSE",
     "RETURN",
 
     "IDENTIFIER",
 
-    "BOOL",
-    "CHAR", "STRING",
     "SINTEGER", "INTEGER",
-    "I8", "I16", "I32", "I64",
-    "U8", "U16", "U32", "U64",
-    "F32", "F64",
     "FLOAT",
     "DOUBLE",
     "ADDRESS",
@@ -216,8 +211,10 @@ namespace ylang {
   constexpr uint32_t kNodeTypeCount = NodeType::NUM_NODE_TYPES + 1;
   constexpr std::array<std::string_view, kNodeTypeCount> NodeTypeStrings = {
     "LITERAL_EXPR",
+    "UNARY_EXPR",
     "BINARY_EXPR",
     "GROUPING_EXPR",
+    "VAR_EXPR",
   
     "EXPRESSION_STMT",
     "VAR_DECL_STMT",
@@ -287,9 +284,9 @@ namespace ylang {
     "EMPTY",
   };
   
-  constexpr uint32_t kOperatorCount = 9;
+  constexpr uint32_t kOperatorCount = 11;
   constexpr std::array<char, kOperatorCount> kOperators = {
-    '{' , '}' , '(' , ')' , '+', '-', '*', '/' , '=' ,
+    '{' , '}' , '(' , ')' , '+', '-', '*', '/' , '=' , ';', ':'
   };
   
   struct SourceLocation {

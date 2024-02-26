@@ -1,5 +1,5 @@
-EXE_NAME = "project"
-PROJECT_NAME = "TestWorkspace"
+EXE_NAME = "compiler"
+PROJECT_NAME = "ylang"
 
 TOOLS_DIR = "tools"
 

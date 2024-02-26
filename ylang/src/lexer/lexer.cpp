@@ -12,10 +12,22 @@ namespace ylang {
 
   Lexer::Lexer(const std::string& src) 
       : src(src) {
-    uint64_t hash = FNV(src);
-    keywords[hash] = TokenType::TRUE;
-    keywords[hash] = TokenType::FALSE;
-    keywords[hash] = TokenType::RETURN;
+    keywords[FNV("bool")] = TokenType::BOOL;
+    keywords[FNV("char")] = TokenType::CHAR;
+    keywords[FNV("string")] = TokenType::STRING;
+    keywords[FNV("u8")] = TokenType::U8;
+    keywords[FNV("u16")] = TokenType::U16;
+    keywords[FNV("u32")] = TokenType::U32;
+    keywords[FNV("u64")] = TokenType::U64;
+    keywords[FNV("i8")] = TokenType::I8;
+    keywords[FNV("i16")] = TokenType::I16;
+    keywords[FNV("i32")] = TokenType::I32;
+    keywords[FNV("i64")] = TokenType::I64;
+    keywords[FNV("f32")] = TokenType::F32;
+    keywords[FNV("f64")] = TokenType::F64;
+    keywords[FNV("true")] = TokenType::TRUE;
+    keywords[FNV("false")] = TokenType::FALSE;
+    keywords[FNV("return")] = TokenType::RETURN;
   }
 
   TokenList Lexer::Lex() {
@@ -269,9 +281,15 @@ namespace ylang {
       case '=':
         AddToken(TokenType::EQUAL);
       break;
+      case ';':
+        AddToken(TokenType::SEMICOLON);
+      break;
+      case ':':
+        AddToken(TokenType::COLON);
+      break;
 
       default:
-        throw Error("Unknown operator");
+        throw Error("Unknown operator : '{}'" , c);
     }
   }
       
@@ -305,9 +323,6 @@ namespace ylang {
   }
      
   void Lexer::AddToken(TokenType type) {
-    if (type == TokenType::COLON || type == TokenType::SEMICOLON) {
-      throw Error("UNIMPLEMENTED: Colon and semicolon are not yet supported");
-    }
     tokens.tokens.push_back(Token(loc, type, current_token));
     DiscardToken();
   }

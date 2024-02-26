@@ -1,6 +1,7 @@
 #include "value.hpp"
 
 #include "errors.hpp"
+#include "util/io.hpp"
 
 namespace ylang {
 
@@ -619,7 +620,7 @@ namespace ylang {
 
       case TokenType::IDENTIFIER: {
         value.size = BYTE;
-        value.type = Type::REGISTER;
+        value.type = Type::ADDRESS;
         Write(value , 0);
         return value;
       }
@@ -674,27 +675,28 @@ namespace ylang {
   }
 
   Value::Type GetCommonType(const Value& lhs , const Value& rhs) {
-    if (lhs.type == rhs.type) {
-      return lhs.type;
-    }
-
     if (lhs.IsSigned()) {
       if (rhs.IsUnsigned()) {
-        return lhs.type;
+        return std::abs(lhs.AsSInt()) > rhs.AsUInt() ? 
+          lhs.type : rhs.type;
       } 
 
       if (rhs.IsNegative()) {
-        return rhs < lhs ?
+        return std::abs(rhs.AsSInt()) > std::abs(lhs.AsSInt()) ?
           rhs.type : lhs.type;
       }
     }
 
     if (lhs.IsUnsigned()) {
-      if (rhs.IsSigned()) {
-        return rhs.type;
+      if (rhs.IsUnsigned()) {
+        return rhs > lhs ?
+          rhs.type : lhs.type;
       }
 
-      return lhs > rhs ? lhs.type : rhs.type;
+      if (rhs.IsNegative()) {
+        return std::abs(rhs.AsSInt()) > lhs.AsUInt() ?
+          rhs.type : lhs.type;
+      }
     }
 
     if (lhs.IsDouble()) {
@@ -718,6 +720,12 @@ namespace ylang {
 
   Value::Type Value::UnsignedToSigned(Value::Type type) {
     switch (type) {
+      case Type::I8:
+      case Type::I16:
+      case Type::I32:
+      case Type::I64:
+        return type;
+
       case Type::U8:
         return Type::I8;
 
@@ -996,6 +1004,11 @@ namespace ylang {
 
     Value v;
     v.type = GetCommonType(lhs, rhs);
+    
+    if (rhs > lhs && v.IsUnsigned()) {
+      v.type = Value::UnsignedToSigned(v.type);
+    }
+
     switch (Value::GetTypeSize(v.type)) {
       case 1: v.size = BYTE; break;
       case 2: v.size = WORD; break;
@@ -1024,7 +1037,14 @@ namespace ylang {
       }
 
       case Value::Type::U8: {
-        uint64_t result = lhs.AsUInt() - rhs.AsUInt();
+        int64_t result = lhs.AsUInt() - rhs.AsUInt();
+
+        if (result < 0) {
+          int8_t result8 = static_cast<int8_t>(result);
+          Value::Write(v , result8);
+          return v;
+        }
+
         uint8_t result8 = static_cast<uint8_t>(result);
         Value::Write(v , result8);
         return v;
@@ -1038,7 +1058,14 @@ namespace ylang {
       }                            
 
       case Value::Type::U16: {
-        uint64_t result = lhs.AsUInt() - rhs.AsUInt();
+        int64_t result = lhs.AsUInt() - rhs.AsUInt();
+
+        if (result < 0) {
+          int16_t result16 = static_cast<int16_t>(result);
+          Value::Write(v , result16);
+          return v;
+        }
+
         uint16_t result16 = static_cast<uint16_t>(result);
         Value::Write(v , result16);
         return v;
@@ -1052,7 +1079,14 @@ namespace ylang {
       }
 
       case Value::Type::U32: {
-        uint64_t result = lhs.AsUInt() - rhs.AsUInt();
+        int64_t result = lhs.AsUInt() - rhs.AsUInt();
+
+        if (result < 0) {
+          int32_t result32 = static_cast<int32_t>(result);
+          Value::Write(v , result32);
+          return v;
+        }
+
         uint32_t result32 = static_cast<uint32_t>(result);
         Value::Write(v , result32);
         return v;
@@ -1065,8 +1099,15 @@ namespace ylang {
       }
 
       case Value::Type::U64: {
-        uint64_t result = lhs.AsUInt() - rhs.AsUInt();
-        Value::Write(v , result);
+        int64_t result = lhs.AsUInt() - rhs.AsUInt();
+
+        if (result < 0) {
+          Value::Write(v , result);
+          return v;
+        }
+
+        uint64_t result64 = static_cast<uint64_t>(result);
+        Value::Write(v , result64);
         return v;
       }
 

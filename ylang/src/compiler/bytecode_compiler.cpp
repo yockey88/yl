@@ -48,6 +48,10 @@ namespace ylang {
   void OpEmitter::Visit(GroupingExpr& expr) {
     expr.expr->Accept(*this);
   }
+
+  void OpEmitter::Visit(VarExpr& expr) {
+    address_t addr = compiler->WriteVariable(expr.name);
+  }
   
   void OpEmitter::Visit(ExprStmt& stmt) {
     stmt.expr->Accept(*this);
@@ -55,30 +59,35 @@ namespace ylang {
 
   void OpEmitter::Visit(VarDeclStmt& stmt) {
     Instruction inst;
-    inst.type = InstructionType::MOV;
-    
-    inst.lhs = Operand(OperandType::REGISTER);
-    inst.lhs->val = Value::CreateValue(stmt.name);
+    inst.type = InstructionType::PUSH;
 
-    if (stmt.initializer != nullptr) {
-      stmt.initializer->Accept(*this);
-      inst.rhs = operand_stack.top();
-      operand_stack.pop();
+    if (stmt.initializer == nullptr) {
+      inst.lhs = Operand(OperandType::IMMEDIATE);
+      inst.lhs->val = Value::CreateValue(stmt.type);
+
+      operand_stack.push(*inst.lhs);
+
+      compiler->EmitInstruction(inst);
     } else {
-      inst.rhs = Operand(OperandType::IMMEDIATE);
-      inst.rhs->val = Value::CreateValue(stmt.type);
+      stmt.initializer->Accept(*this);
+
+      if (token_stack.size() > 0) {
+        inst.lhs = Operand(OperandType::DIRECT);
+        inst.lhs->val = Value::CreateValue(token_stack.top());
+        token_stack.pop();
+      } else {
+        inst.lhs = operand_stack.top();
+        operand_stack.pop();
+      }
     }
   }
 
   void OpEmitter::Visit(BlockStmt& stmt) {
-    /// preliminary scope setup instructions
     Instruction inst;
 
     for (auto& s : stmt.statements) {
       s->Accept(*this);
     }
-
-    /// final scope teardown instructions
   }
 
   void OpEmitter::EmitOp(InstructionType type) {
@@ -89,18 +98,10 @@ namespace ylang {
     
   void OpEmitter::EmitLiteral(Token value) {
     Instruction inst;
-    inst.type = InstructionType::MOV;
+    inst.type = InstructionType::PUSH;
 
-    inst.lhs = Operand(OperandType::REGISTER);
-    size_t type_size = GetTypeSize(value.type);
-    if (type_size == 0) {
-      // Resolve user defined type 
-
-    }
-    inst.lhs->val = Value::CreateValue(RBP);
-
-    inst.rhs = Operand(OperandType::IMMEDIATE);
-    inst.rhs->val = Value::CreateValue(value);
+    inst.lhs = Operand(OperandType::IMMEDIATE);
+    inst.lhs->val = Value::CreateValue(value);
 
     operand_stack.push(*inst.lhs);
 
@@ -113,10 +114,8 @@ namespace ylang {
 
     expr->Accept(*this);
 
-    inst.lhs = operand_stack.top();
+    Operand op = operand_stack.top();
     operand_stack.pop();
-
-    operand_stack.push(*inst.lhs);
 
     compiler->EmitInstruction(inst);
   }
@@ -128,13 +127,11 @@ namespace ylang {
     rhs->Accept(*this);
     lhs->Accept(*this);
 
-    inst.lhs = operand_stack.top();
+    Operand lhs_op = operand_stack.top();
     operand_stack.pop();
 
-    inst.rhs = operand_stack.top();
+    Operand rhs_op = operand_stack.top();
     operand_stack.pop();
-
-    operand_stack.push(*inst.lhs);
 
     compiler->EmitInstruction(inst);
   }
@@ -143,18 +140,14 @@ namespace ylang {
   Assembly BytecodeCompiler::Compile() {
     OpEmitter emitter(this);
 
+    assembly.chunks.push_back(Chunk());
+    current_chunk = &assembly.chunks.back();
+
     for (size_t i = 0; i < ast.Nodes().size(); ++i) {
       try {
-        assembly.chunks.push_back(Chunk());
-        current_chunk = &assembly.chunks.back();
 
         ast.Nodes()[i]->Accept(emitter);
-        Operand ret = emitter.operand_stack.empty() ?
-          Operand(OperandType::EMPTY) : emitter.operand_stack.top();
-        if (ret.type != OperandType::EMPTY) {
-          emitter.operand_stack.pop();
-        }
-        EmitReturn(ret);
+        
       } catch (const CompilerError& e) {
         printerr(ErrorType::COMPILER , "Compiler Failure : " + std::string{ e.what() });
         break;
@@ -167,37 +160,29 @@ namespace ylang {
       }
     }
 
+    Instruction ret;
+    ret.type = InstructionType::RET;
+    EmitInstruction(ret);
+
     return assembly;
   }
-      
+
+  address_t BytecodeCompiler::WriteVariable(Token name) {
+    return assembly.Write(name);
+  }
+
   RegisterType BytecodeCompiler::WriteRegister() {
-    RegisterType reg = current_register;
-    current_register = static_cast<RegisterType>(static_cast<uint32_t>(current_register) + 1);
-    if (current_register == RegisterType::R15) {
+    RegisterType reg{ current_register };
+    current_register++;
+    if (RegisterType{ current_register } == RegisterType::RBP) {
       current_register = RegisterType::R12;
     }
+
     return reg;
   }
 
   void BytecodeCompiler::EmitInstruction(Instruction inst) {
     current_chunk->instructions.push_back(inst);
-  }
-  
-  void BytecodeCompiler::EmitReturn(Operand mov_val) {
-    Instruction ret;
-    ret.type = InstructionType::RET;
-
-    if (mov_val.type != OperandType::EMPTY) {
-      Instruction mov;
-      mov.type = InstructionType::MOV;
-      mov.lhs = Operand(OperandType::REGISTER);
-      (*mov.lhs).val = Value::CreateValue(RegisterType::RAX);
-      mov.rhs = mov_val;
-
-      EmitInstruction(mov);
-    }
-
-    EmitInstruction(ret);
   }
 
 } // namespace ylang

@@ -14,25 +14,22 @@ namespace ylang {
     Consume(TokenType::START , "Expected start of file");
 
     while (!AtEnd()) {
-      try {
-        if (Check(TokenType::END)) {
-          break;
-        }
+      if (Check(TokenType::END)) {
+        break;
+      }
 
-        Stmt* stmt = ParseDeclaration();
-        if (stmt != nullptr) {
-          ast.nodes.push_back(stmt);
-        } else {
-          Sync();
-        }
-      } catch (const ParserError& e) {
-        printerr(ErrorType::PARSER , e.what());
+      Stmt* stmt = ParseDeclaration();
+      if (stmt != nullptr) {
+        ast.nodes.push_back(stmt);
+      } else {
+        // Sync();
         return ast;
       }
     }
 
     Consume(TokenType::END , "Expected end of file");
 
+    ast.Validate();
     return ast;
   }
 
@@ -43,6 +40,7 @@ namespace ylang {
       }
       return ParseStatement();
     } catch (const ParserError& e) {
+      printerr(ErrorType::PARSER , "Failed to parse declaration");
       printerr(ErrorType::PARSER , e.what());
       return nullptr;
     }
@@ -52,22 +50,26 @@ namespace ylang {
     Token name = Consume(TokenType::IDENTIFIER , "Expected identifier");
 
     if (Match({ TokenType::EQUAL , TokenType::COLON , TokenType::SEMICOLON })) {
+      if (Previous().type == TokenType::SEMICOLON) {
+        return new VarDeclStmt(name , nullptr);
+      }
+
       if (Previous().type == TokenType::COLON) {
-        Token type = ConsumeType("Expected type");
+        Token type = ConsumeType(fmtstr("Expected type after ':' found '{}'" , TokenTypeStrings[Peek().type]));
+        Consume(TokenType::EQUAL , "Expected '=' after type declaration");
         return ParseVarDeclaration(name , type);
       }
+
       return ParseVarDeclaration(name);
     }
 
-    throw Error("Expected '=' or ';'");
+    throw Error("Expected '=', ':', or ';'");
   }
 
   Stmt* Parser::ParseVarDeclaration(const Token& name , const Token& type) {
-    if (Match({ TokenType::SEMICOLON })) {
-      return new VarDeclStmt(name , nullptr);
-    }
-
     Expr* initializer = ParseExpression();
+    Consume(TokenType::SEMICOLON , "Expected semicolon");
+
     if (type.type == TokenType::UNKNOWN) {
       return new VarDeclStmt(name , initializer);
     }
@@ -154,7 +156,11 @@ namespace ylang {
       return new UnaryExpr(op , right);
     }
 
-    throw Error("Failed to resolve expression");
+    if (Match({ TokenType::IDENTIFIER })) {
+      return new VarExpr(Previous());
+    }
+
+    throw Error(fmtstr("Failed to resolve expression at '{}'" , Peek().value));
   }
 
   Token Parser::Peek() const {
@@ -187,6 +193,9 @@ namespace ylang {
     }
 
     switch (Peek().type) {
+      case TokenType::BOOL:
+      case TokenType::CHAR:
+      case TokenType::STRING:
       case TokenType::I8:
       case TokenType::I16:
       case TokenType::I32:

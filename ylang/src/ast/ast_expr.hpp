@@ -61,6 +61,19 @@ namespace ylang {
       Expr* expr;
   };
 
+  class VarExpr : public Expr {
+    public:
+      VarExpr(Token name) 
+        : Expr(NodeType::VAR_EXPR) , name(name) {}
+      ~VarExpr();
+
+      std::string ToString() const override;
+      void Accept(TreeWalker& walker) override;
+      std::vector<Instruction> Emit() override;
+
+      Token name;
+  };
+
 } // namespace ylang
 
 #endif // !YL_AST_EXPR_HPP

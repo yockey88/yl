@@ -9,7 +9,10 @@ namespace ylang {
 
   class Ast {
     public:
+      inline bool IsValid() const { return valid; }
       std::vector<Stmt*>& Nodes();
+
+      void Validate();
 
       void Walk(TreeWalker& walker);
       void PrintTree();
@@ -17,6 +20,7 @@ namespace ylang {
     private:
       friend class Parser;
 
+      bool valid{ false };
       std::vector<Stmt*> nodes{};
   };
 

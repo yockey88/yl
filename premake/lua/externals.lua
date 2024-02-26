@@ -83,11 +83,11 @@ end
 function IncludeDependencies(configuration)
   local target = FirstToUpper(os.target())
 
-  for key, lib_data in OrderedPairs(configuration) do
+  for key, lib_data in OrderedPairs(External) do
     local matches_config = true
 
-    if configuration ~= nil and lib_data.Configurations ~= nil then
-      matches_config = string.find(lib_data.Configurations, configuration)
+    if configuration ~= nil and lib_data.configurations ~= nil then
+      matches_config = string.find(lib_data.configurations, configuration)
     end
 
     if matches_config then
@@ -108,7 +108,7 @@ function AddDependencies()
   print("[ Group ] : Externals")
   group "Externals"
   for _, lib_data in OrderedPairs(external_paths) do
-    include (lib_data)
+    include(lib_data)
   end
   group ""
 end
@@ -120,13 +120,8 @@ function AddDependency(data)
   end
 
   if data.path ~= nil then
-    external_paths[data.name] = data.path
-    External[data.name] = {}
-    External[data.name].include_dir = data.include_dir or nil
-    External[data.name].lib_name = data.lib_name or nil
-    External[data.name].lib_dir = data.lib_dir or nil
-    External[data.name].configurations = data.configurations or nil
-  else
-    print("AddDependency: data.name is nil")
+    table.insert(external_paths, data.path)
   end
+
+  table.insert(External, data)
 end

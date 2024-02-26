@@ -8,18 +8,21 @@
 #include "compiler/bytecode_compiler.hpp"
 #include "vm/vm.hpp"
 
+std::string ReadSrc(const std::string& path) {
+  std::ifstream file(path);
+  if (!file.is_open()) {
+    std::cerr << "Failed to open file" << std::endl;
+    return "";
+  }
+  std::stringstream ss;
+  ss << file.rdbuf();
+  return ss.str();
+}
+
 int main() {
-#if 1
-  std::string src;
-  {
-    std::ifstream file("test_files/test1.yl");
-    if (!file.is_open()) {
-      std::cerr << "Failed to open file" << std::endl;
-      return 1;
-    }
-    std::stringstream ss;
-    ss << file.rdbuf();
-    src = ss.str();
+  std::string src = ReadSrc("test_files/test1.yl");
+  if (src.empty()) {
+    return 1;
   }
 
   std::cout << "[ Source ] : " << src << std::endl;
@@ -28,13 +31,20 @@ int main() {
   ylang::Lexer lexer(src);
   auto tokens = lexer.Lex();
 
+#if 0
   for (auto token : tokens.tokens) {
     std::cout << ylang::TokenTypeStrings[token.type] << std::endl;
   }
+#endif
 
   std::cout << "=== Parsing ===" << std::endl;
   ylang::Parser parser(tokens.tokens);
   auto ast = parser.Parse();
+
+  if (!ast.IsValid()) {
+    ylang::printerr(ylang::ErrorType::PARSER , "Invalid AST");
+    return 1;
+  }
 
   ast.PrintTree();
 
@@ -48,26 +58,7 @@ int main() {
   std::cout << "=== Execution ===" << std::endl;
   ylang::VM vm;
   vm.Load(&bytecode);
-  vm.Run();
-#else
-  try {
-
-    ylang::Value addr_val;
-    addr_val.type = ylang::Value::Type::ADDRESS;
-    addr_val.value = ylang::address_t{ 0xdeadbeef };
-    addr_val.size = ylang::QWORD;
-
-    ylang::printfmt("Value Index : {}\n" , addr_val.value.index());
-
-    ylang::address_t addr = addr_val.As<ylang::address_t>();
-    ylang::printfmt("Address: {}" , addr);
-
-  } catch (std::bad_variant_access& e) {
-    fmt::print(std::string_view{ "Invalid type access into value\n" });
-    fmt::print(std::string_view{ "Error: {}\n" } , e.what());
-  }
-
-#endif
+  // vm.Run();
 
   return 0;
 }

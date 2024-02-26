@@ -1,9 +1,9 @@
 local function GenOrderedIndex(t)
     local orderedIndex = {}
     for key in pairs(t) do
-        table.insert( orderedIndex, key )
+        table.insert(orderedIndex, key)
     end
-    table.sort( orderedIndex )
+    table.sort(orderedIndex)
     return orderedIndex
 end
 

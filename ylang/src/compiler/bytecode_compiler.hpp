@@ -22,6 +22,7 @@ namespace ylang {
       void Visit(UnaryExpr& expr) override;
       void Visit(BinaryExpr& expr) override;
       void Visit(GroupingExpr& expr) override;
+      void Visit(VarExpr& expr) override;
 
       void Visit(ExprStmt& stmt) override;
       void Visit(VarDeclStmt& stmt) override;
@@ -32,8 +33,9 @@ namespace ylang {
 
       BytecodeCompiler* compiler;
 
+      std::stack<address_t> addr_stack;
+      std::stack<Token> token_stack;
       std::stack<Operand> operand_stack;
-      std::stack<address_t> address_stack;
 
       address_t cursor{ 0 };
 
@@ -52,7 +54,7 @@ namespace ylang {
 
       Assembly Compile();
 
-      RegisterType StackRegister();
+      address_t WriteVariable(Token name);
       RegisterType WriteRegister();
 
     private:
@@ -63,10 +65,10 @@ namespace ylang {
       Chunk* current_chunk;
       Assembly assembly;
 
-      RegisterType current_register = RegisterType::R12;
+      address_t stack_cursor{ 0 };
+      uint8_t current_register = RegisterType::R12;
 
       void EmitInstruction(Instruction type);
-      void EmitReturn(Operand mov_val); 
   };
 
 } // namespace ylang
