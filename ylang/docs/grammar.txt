@@ -1,0 +1,31 @@
+[ program ] : START statement* END;
+
+[ statement ] : expression-statement;
+
+[ expression-statement ] : expression ";";
+
+[ expression ] : literal | grouping | unary | binary;
+
+[ literal ] : INTEGER | HEX-INTEGER | FLOAT | STRING | CHAR | 
+              "true" | "false" | "null";
+
+[ grouping ] : "(" expression ")";
+
+[ unary ] : ("-" | "+" | "!") expression;
+
+[ binary ] : expression operator expression;
+
+[ operator ] : "==" | "!=" | "<" | "<=" | ">" | ">=" |
+               "+"  | "-"  | "*" | "/"  | "%" | "&&" | "||"; 
+
+
+
+Operator Precedence:
+
+1. Unary: - + !
+2. Multiplication, Division, Modulus: * / %
+3. Addition, Subtraction: + -
+4. Comparison: < <= > >=
+5. Equality: == !=
+6. Logical AND: &&
+7. Logical OR: ||
