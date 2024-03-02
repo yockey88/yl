@@ -4,18 +4,39 @@
 #include <vector>
 
 #include "defines.hpp"
-#include "token.hpp"
-#include "value.hpp"
 #include "compiler/chunk.hpp"
+#include "env/environment.hpp"
 
 namespace ylang {
 
   class Assembly {
     public:
+      Assembly() 
+        : env(new Environment{}) {}
+      ~Assembly() {}
+
+      Assembly(Assembly&& other) {
+        env = std::move(other.env);
+        chunks = std::move(other.chunks);
+      }
+
+      Assembly(const Assembly& other) = delete;
+
       std::vector<Chunk> chunks;
 
-      address_t Write(Token token);
-      Value Read(address_t address);
+      std::unique_ptr<Environment> Env() { 
+        std::unique_ptr<Environment> ret = std::move(env);
+        env = nullptr;
+        return ret; 
+      }
+
+      std::unique_ptr<Environment>& GetEnv() { return env; }
+
+      address_t Write(const std::string& name , Value var);
+
+      address_t ReadAddress(const std::string& name);
+      Variable Read(address_t address);
+      Variable Read(const std::string& name);
 
       void Dump();
       void DumpMemory();
@@ -28,7 +49,7 @@ namespace ylang {
       }
 
     private:
-      address_t cursor{ 0 };
+      std::unique_ptr<Environment> env = nullptr;
 
       void printchunk(const Chunk* chunk, const std::string& name);
       void printaddr(address_t addr);

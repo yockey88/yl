@@ -14,20 +14,20 @@ TEST_F(ValueTests, byte_test) {
   ASSERT_EQ(value.type, ylang::Value::Type::U8);
   ASSERT_EQ((uint32_t)value.size , ylang::BYTE);
 
-  ASSERT_NO_THROW(value.As<uint8_t>());
+  ASSERT_NO_THROW((void)value.As<uint8_t>());
   EXPECT_EQ(value.As<uint8_t>(), 123);
 
-  ASSERT_THROW(value.As<int8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<float>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<double>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::address_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::RegisterType>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<float>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<double>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::address_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::RegisterType>(), std::bad_variant_access);
 }
 
 TEST_F(ValueTests, word_test) {
@@ -40,20 +40,20 @@ TEST_F(ValueTests, word_test) {
   ASSERT_EQ(value.type, ylang::Value::Type::U16);
   ASSERT_EQ((uint32_t)value.size , ylang::WORD);
 
-  ASSERT_NO_THROW(value.As<uint16_t>());
+  ASSERT_NO_THROW((void)value.As<uint16_t>());
   EXPECT_EQ(value.As<uint16_t>(), 12345);
 
-  ASSERT_THROW(value.As<int8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<float>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<double>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::address_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::RegisterType>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<float>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<double>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::address_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::RegisterType>(), std::bad_variant_access);
 }
 
 TEST_F(ValueTests , dword_test) {
@@ -66,20 +66,20 @@ TEST_F(ValueTests , dword_test) {
   ASSERT_EQ(value.type, ylang::Value::Type::U32);
   ASSERT_EQ((uint32_t)value.size , ylang::DWORD);
 
-  ASSERT_NO_THROW(value.As<uint32_t>());
+  ASSERT_NO_THROW((void)value.As<uint32_t>());
   EXPECT_EQ(value.As<uint32_t>(), 123456789);
 
-  ASSERT_THROW(value.As<int8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<float>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<double>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::address_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::RegisterType>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<float>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<double>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::address_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::RegisterType>(), std::bad_variant_access);
 }
 
 TEST_F(ValueTests , qword_test) {
@@ -92,20 +92,20 @@ TEST_F(ValueTests , qword_test) {
   ASSERT_EQ(value.type, ylang::Value::Type::U64);
   ASSERT_EQ((uint32_t)value.size , ylang::QWORD);
 
-  ASSERT_NO_THROW(value.As<uint64_t>());
+  ASSERT_NO_THROW((void)value.As<uint64_t>());
   EXPECT_EQ(value.As<uint64_t>(), 123456789123456789);
 
-  ASSERT_THROW(value.As<int8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<float>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<double>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::address_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::RegisterType>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<float>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<double>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::address_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::RegisterType>(), std::bad_variant_access);
 }
 
 TEST_F(ValueTests , float_test) {
@@ -118,20 +118,20 @@ TEST_F(ValueTests , float_test) {
   ASSERT_EQ(value.type, ylang::Value::Type::F32);
   ASSERT_EQ((uint32_t)value.size , ylang::DWORD);
 
-  ASSERT_NO_THROW(value.As<float>());
+  ASSERT_NO_THROW((void)value.As<float>());
   EXPECT_EQ(value.As<float>(), 123.456f);
 
-  ASSERT_THROW(value.As<int8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<double>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::address_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::RegisterType>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<double>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::address_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::RegisterType>(), std::bad_variant_access);
 }
 
 TEST_F(ValueTests , double_test) {
@@ -144,20 +144,20 @@ TEST_F(ValueTests , double_test) {
   ASSERT_EQ(value.type, ylang::Value::Type::F64);
   ASSERT_EQ((uint32_t)value.size , ylang::QWORD);
 
-  ASSERT_NO_THROW(value.As<double>());
+  ASSERT_NO_THROW((void)value.As<double>());
   EXPECT_EQ(value.As<double>(), 123456789.123456789);
 
-  ASSERT_THROW(value.As<int8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<float>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::address_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::RegisterType>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<float>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::address_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::RegisterType>(), std::bad_variant_access);
 }
 
 TEST_F(ValueTests , address_test) {
@@ -174,20 +174,20 @@ TEST_F(ValueTests , address_test) {
   ASSERT_EQ(value.type, ylang::Value::Type::ADDRESS);
   EXPECT_EQ((uint32_t)value.size , ylang::QWORD);
 
-  ASSERT_NO_THROW(value.As<ylang::address_t>());
+  ASSERT_NO_THROW((void)value.As<ylang::address_t>());
   EXPECT_EQ(value.As<ylang::address_t>().address, 0x123456789);
 
-  ASSERT_THROW(value.As<int8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<float>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<double>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::RegisterType>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<float>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<double>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::RegisterType>(), std::bad_variant_access);
 }
 
 TEST_F(ValueTests , register_test) {
@@ -201,18 +201,18 @@ TEST_F(ValueTests , register_test) {
   ASSERT_EQ(value.type, ylang::Value::Type::REGISTER);
   EXPECT_EQ((uint32_t)value.size , ylang::QWORD);
 
-  ASSERT_NO_THROW(value.As<ylang::RegisterType>());
+  ASSERT_NO_THROW((void)value.As<ylang::RegisterType>());
   EXPECT_EQ(value.As<ylang::RegisterType>(), ylang::RegisterType::RAX);
 
-  ASSERT_THROW(value.As<int8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint8_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint16_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint32_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<int64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<uint64_t>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<float>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<double>(), std::bad_variant_access);
-  ASSERT_THROW(value.As<ylang::address_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint8_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint16_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint32_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<int64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<uint64_t>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<float>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<double>(), std::bad_variant_access);
+  ASSERT_THROW((void)value.As<ylang::address_t>(), std::bad_variant_access);
 }

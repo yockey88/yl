@@ -48,6 +48,20 @@ namespace ylang {
       Expr* right;
   };
 
+  class CallExpr : public Expr {
+    public:
+      CallExpr(Expr* callee, std::vector<Expr*> args) 
+        : Expr(NodeType::CALL_EXPR) , callee(callee), args(args) {}
+      ~CallExpr();
+
+      std::string ToString() const override;
+      void Accept(TreeWalker& walker) override;
+      std::vector<Instruction> Emit() override;
+
+      Expr* callee;
+      std::vector<Expr*> args;
+  };
+
   class GroupingExpr : public Expr {
     public:
       GroupingExpr(Expr* expr) 
@@ -72,6 +86,62 @@ namespace ylang {
       std::vector<Instruction> Emit() override;
 
       Token name;
+  };
+
+  class AssignExpr : public Expr {
+    public:
+      AssignExpr(Token name, Expr* value) 
+        : Expr(NodeType::ASSIGN_EXPR) , name(name), value(value) {}
+      ~AssignExpr();
+
+      std::string ToString() const override;
+      void Accept(TreeWalker& walker) override;
+      std::vector<Instruction> Emit() override;
+
+      Token name;
+      Expr* value;
+  };
+
+  class ArrayExpr : public Expr {
+    public:
+      ArrayExpr(std::vector<Expr*> elements) 
+        : Expr(NodeType::ARRAY_EXPR) , elements(elements) {}
+      ~ArrayExpr();
+
+      std::string ToString() const override;
+      void Accept(TreeWalker& walker) override;
+      std::vector<Instruction> Emit() override;
+
+      std::vector<Expr*> elements;
+  };
+
+  class ArrayAccessExpr : public Expr {
+    public:
+      ArrayAccessExpr(Expr* array, Expr* index) 
+        : Expr(NodeType::ARRAY_ACCESS_EXPR) , array(array), index(index) {}
+      ~ArrayAccessExpr();
+
+      std::string ToString() const override;
+      void Accept(TreeWalker& walker) override;
+      std::vector<Instruction> Emit() override;
+
+      Expr* array;
+      Expr* index;
+  };
+
+  class ObjAccessExpr : public Expr {
+    public:
+      ObjAccessExpr(Expr* obj, Token member , Expr* assignment = nullptr) 
+        : Expr(NodeType::OBJ_ACCESS_EXPR) , obj(obj), member(member) , assignment(assignment) {}
+      ~ObjAccessExpr() { delete obj; }
+
+      std::string ToString() const override;
+      void Accept(TreeWalker& walker) override;
+      std::vector<Instruction> Emit() override;
+
+      Expr* obj;
+      Token member;
+      Expr* assignment;
   };
 
 } // namespace ylang

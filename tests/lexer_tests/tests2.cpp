@@ -1,13 +1,11 @@
-#include <iostream>
-#include <string>
-
-#include <gtest/gtest.h>
-
 #include "lexer_tests.hpp"
+
+#include <iostream>
+
 #include "lexer/lexer.hpp"
 
 TEST_F(lexer_tests2 , simple_multiplication) {
-  std::cout << "[ Content } : " << content1 << std::endl;
+  std::cout << "[ Content ] : " << content1 << std::endl;
   ylang::Lexer lexer(content1);
   tokens = lexer.Lex();
 

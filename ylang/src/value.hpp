@@ -40,6 +40,8 @@ namespace ylang {
   constexpr static uint32_t kRegisterIndex = 13;
   constexpr static uint32_t kMonostateIndex = 14;
 
+#pragma pack(push , 1)
+
   class Value {
     public:
       enum Type {
@@ -49,10 +51,15 @@ namespace ylang {
         F32 , F64 ,
         ADDRESS ,
         REGISTER ,
-        NIL
-      } type = U64;
+        STRING ,
+        ARRAY ,
+        STRUCT ,
+        NIL ,
+
+        COUNT = NIL + 1
+      } type = NIL;
       WordSize size = QWORD;
-      ValueData value;
+      ValueData value = std::monostate{};
 
       template <value_t T>
       [[nodiscard]] T& As() {
@@ -69,6 +76,9 @@ namespace ylang {
         value.value = val;
       }
 
+      static void WriteSValue(Value& value , const int64_t& val);
+      static void WriteUValue(Value& value , const uint64_t& val);
+
       uint8_t* AsBytes();
       int64_t AsSInt() const;
       uint64_t AsUInt() const;
@@ -77,6 +87,8 @@ namespace ylang {
       address_t AsAddress() const;
       RegisterType AsRegister() const;
       bool AsBool() const;
+      char AsChar() const;
+      std::string AsString() const;
 
       Value() = default;
       Value(Value&& rhs);
@@ -94,21 +106,30 @@ namespace ylang {
       bool IsFloat() const;
       bool IsDouble() const;
       bool IsBool() const;
+      bool IsChar() const;
       bool IsSigned() const;
       bool IsUnsigned() const;
       bool IsAddress() const;
       bool IsRegister() const;
+      bool IsString() const;
+      bool IsArray() const;
       bool TypesCompatible(const Value& rhs) const;
 
       static Value CreateValue(const Token& token);
+      static Value CreateValue(bool val);
+      static Value CreateValue(char val);
       static Value CreateValue(const address_t& addr);
       static Value CreateValue(RegisterType reg);
 
       static size_t GetTypeSize(Value::Type type);
       static Value::Type GetCommonType(const Value& lhs , const Value& rhs);
+      static WordSize ResolveSWordSize(int64_t size);
+      static WordSize ResolveUWordSize(uint64_t size);
       static Value::Type UnsignedToSigned(Value::Type type);
       static Value::Type SignedToUnsigned(Value::Type type);
   };
+
+#pragma pack(pop)
 
   bool operator<(const address_t& lhs , const Value& rhs);
   bool operator>(const address_t& lhs , const Value& rhs);
@@ -129,6 +150,8 @@ namespace ylang {
   bool operator!=(const Value& lhs , const Value& rhs);
   bool operator<=(const Value& lhs , const Value& rhs);
   bool operator>=(const Value& lhs , const Value& rhs);
+  bool operator&&(const Value& lhs , const Value& rhs);
+  bool operator||(const Value& lhs , const Value& rhs);
 
   Value operator+(const Value& lhs , const Value& rhs);
   Value operator-(const Value& lhs , const Value& rhs);
@@ -141,121 +164,163 @@ namespace ylang {
     "int8" , "int16" , "int32" , "int64" , 
     "uint8" , "uint16" , "uint32" , "uint64" , 
     "float" , "double" , 
-    "address" , "register" , "nil"
+    "address" , "register" , "string" , "array" ,
+    "struct" , 
+    "nil"
   };
 
 } // namespace ylang
 
+template <>
+struct fmt::formatter<ylang::Value::Type> : fmt::formatter<std::string_view> {
+  auto format(ylang::Value::Type type , fmt::format_context& ctx) const {
+    std::string type_str = "UNKNOWN";
+
+    switch (type) {
+      case ylang::Value::Type::BOOL:
+        type_str = "BOOL";
+      break;
+      case ylang::Value::Type::CHAR:
+        type_str = "CHAR";
+      break;
+      case ylang::Value::Type::I8:
+        type_str = "I8";
+      break;
+      case ylang::Value::Type::I16:
+        type_str = "I16";
+      break;
+      case ylang::Value::Type::I32:
+        type_str = "I32";
+      break;
+      case ylang::Value::Type::I64:
+        type_str = "I64";
+      break;
+      case ylang::Value::Type::U8:
+        type_str = "U8";
+      break;
+      case ylang::Value::Type::U16:
+        type_str = "U16";
+      break;
+      case ylang::Value::Type::U32:
+        type_str = "U32";
+      break;
+      case ylang::Value::Type::U64:
+        type_str = "U64";
+      break;
+      case ylang::Value::Type::F32:
+        type_str = "F32";
+      break;
+      case ylang::Value::Type::F64:
+        type_str = "F64";
+      break;
+      case ylang::Value::Type::STRING:
+        type_str = "STRING";
+      break;
+      case ylang::Value::Type::ARRAY:
+        type_str = "ARRAY";
+      break;
+      case ylang::Value::Type::ADDRESS:
+        type_str = "ADDRESS";
+      break;
+      case ylang::Value::Type::REGISTER:
+        type_str = "REGISTER";
+      break;
+      case ylang::Value::Type::STRUCT:
+        type_str = "STRUCT";
+      break;
+      case ylang::Value::Type::NIL:
+        type_str = "NIL";
+      break;
+      default:
+        type_str = "UNKNOWN";
+    }
+
+    return fmt::formatter<std::string_view>::format(type_str , ctx);
+  }
+
+};
+
+template <>
+struct fmt::formatter<ylang::WordSize> : fmt::formatter<std::string_view> {
+  auto format(ylang::WordSize size , fmt::format_context& ctx) const {
+    std::string size_str = "UNKNOWN";
+
+    switch (size) {
+      case ylang::WordSize::BYTE:
+        size_str = "BYTE";
+      break;
+      case ylang::WordSize::WORD:
+        size_str = "WORD";
+      break;
+      case ylang::WordSize::DWORD:
+        size_str = "DWORD";
+      break;
+      case ylang::WordSize::QWORD:
+        size_str = "QWORD";
+      break;
+      default:
+        size_str = fmt::format(fmt::runtime("{}") , static_cast<size_t>(size));;
+    }
+
+    return fmt::formatter<std::string_view>::format(size_str , ctx);
+  }
+};
+
+template <>
+struct fmt::formatter<ylang::ValueData> : fmt::formatter<std::string_view> {
+  auto format(ylang::ValueData val , fmt::format_context& ctx) const {
+    std::string data = "UNKNOWN";
+
+    std::visit([&data](auto&& arg) {
+      using T = std::decay_t<decltype(arg)>;
+      if constexpr (std::is_same_v<T , bool>) {
+        data = arg ? "true" : "false";
+      } else if constexpr (std::is_same_v<T , char>) {
+        data.clear();
+        data += arg;
+      } else if constexpr (std::is_same_v<T , uint8_t>) {
+        data = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T , uint16_t>) {
+        data = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T , uint32_t>) {
+        data = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T , uint64_t>) {
+        data = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T , int8_t>) {
+        data = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T , int16_t>) {
+        data = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T , int32_t>) {
+        data = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T , int64_t>) {
+        data = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T , float>) {
+        data = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T , double>) {
+        data = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T , ylang::RegisterType>) {
+        data = ylang::RegisterStrings[static_cast<size_t>(arg)];
+      } else if constexpr (std::is_same_v<T , ylang::address_t>) {
+        data = fmt::format(fmt::runtime("{:#08x}") , arg.address);
+      } else if constexpr (std::is_same_v<T , std::monostate>) {
+        data = "nil";
+      } else {
+        data = "UNKNOWN";
+      }
+    } , val);
+
+    return fmt::formatter<std::string_view>::format(data , ctx);
+  }
+};
+
 template<>
 struct fmt::formatter<ylang::Value> : fmt::formatter<std::string_view> {
   auto format(ylang::Value val , fmt::format_context& ctx) const {
-    std::string type = "UNKNOWN";
-    std::string size = "UNKNOWN";
-    std::string data = "UNKNOWN";
+    std::string type = fmt::format(fmt::runtime("Type: {}") , val.type);
+    std::string size = fmt::format(fmt::runtime("Size: {}") , val.size);
+    std::string data = fmt::format(fmt::runtime("Data: {}") , val.value);    
 
-    auto index = val.value.index();
-
-    switch (val.type) {
-      case ylang::Value::ADDRESS:
-        type = "ADDRESS";
-        size = std::to_string(val.size);
-      break;
-      case ylang::Value::REGISTER:
-        type = "REGISTER";
-        size = std::to_string(val.size);
-      break;
-      case ylang::Value::I8:
-        type = "I8";
-        size = std::to_string(val.size);
-      break;
-      case ylang::Value::I16:
-        type = "I16";
-        size = std::to_string(val.size);
-      break;
-      case ylang::Value::I32:
-        type = "I32";
-        size = std::to_string(val.size);
-      break;
-      case ylang::Value::I64:
-        type = "I64";
-        size = std::to_string(val.size);
-      break;
-      case ylang::Value::U8:
-        type = "U8";
-        size = std::to_string(val.size);
-      break;
-      case ylang::Value::U16:
-        type = "U16";
-        size = std::to_string(val.size);
-      break;
-      case ylang::Value::U32:
-        type = "U32";
-        size = std::to_string(val.size);
-      break;
-      case ylang::Value::U64:
-        type = "U64";
-        size = std::to_string(val.size);
-      break;
-      case ylang::Value::F32:
-        type = "F32";
-        size = std::to_string(val.size);
-      break;
-      case ylang::Value::F64:
-        type = "F64";
-        size = std::to_string(val.size);
-      break;
-      default:
-        size = std::to_string(val.size);
-    }
-    
-    switch (index) {
-      case ylang::kCharIndex:
-        data = std::to_string(val.As<char>());
-      break;
-      case ylang::kInt8Index:
-        data = std::to_string(val.As<int8_t>());
-      break;
-      case ylang::kInt16Index:
-        data = std::to_string(val.As<int16_t>());
-      break;
-      case ylang::kInt32Index:
-        data = std::to_string(val.As<int32_t>());
-      break;
-      case ylang::kInt64Index:
-        data = std::to_string(val.As<int64_t>());
-      break;
-      case ylang::kUInt8Index:
-        data = std::to_string(val.As<uint8_t>());
-      break;
-      case ylang::kUInt16Index:
-        data = std::to_string(val.As<uint16_t>());
-      break;
-      case ylang::kUInt32Index:
-        data = std::to_string(val.As<uint32_t>());
-      break;
-      case ylang::kUInt64Index:
-        data = std::to_string(val.As<uint64_t>());
-      break;
-      case ylang::kFloatIndex:
-        data = std::to_string(val.As<float>());
-      break;
-      case ylang::kDoubleIndex:
-        data = std::to_string(val.As<double>());
-      break;
-      case ylang::kRegisterIndex:
-        data = std::to_string(val.As<ylang::RegisterType>());
-      break;
-      case ylang::kAddressIndex:
-        data = fmt::format(fmt::runtime("{:#08x}") , val.As<ylang::address_t>().address);
-      break;
-      case ylang::kMonostateIndex:
-        data = "MONOSTATE";
-      break;
-      default:
-        data = "UNKNOWN";
-    }
-
-    std::string out_str = fmt::format(fmt::runtime("Value<Type: {} Size: {} Data: {}>"), type , size , data);
+    std::string out_str = fmt::format(fmt::runtime("Value<{} {} {}>"), type , size , data);
     return fmt::formatter<std::string_view>::format(out_str , ctx);
   }
 };

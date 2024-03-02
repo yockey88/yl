@@ -16,6 +16,12 @@ struct std::hash<ylang::Token> {
 
 namespace ylang {
 
+  enum CallableType {
+    FUNCTION,
+
+    NUM_CALLABLE_TYPES
+  };
+
 
   class Parser {
     public:
@@ -31,25 +37,45 @@ namespace ylang {
 
       size_t current = 0;
 
+      std::vector<Token> declared_types;
+
       Stmt* ParseDeclaration();
       Stmt* ResolveDeclaration();
+
+      Stmt* ParseCallable(CallableType type , const Token& name);
+      Stmt* ParseFunctionDeclaration(const Token& name);
       Stmt* ParseVarDeclaration(const Token& name , 
           const Token& type = Token(SourceLocation{} , TokenType::UNKNOWN , ""));
+      Stmt* ParseArrayDeclaration(const Token& name , 
+          const Token& type = Token(SourceLocation{} , TokenType::UNKNOWN , ""));
+
+      Stmt* ParseStructDeclaration();
                                                                                                    
       Stmt* ParseStatement();                                                                      
-                                                                                                   
       Stmt* ParseBlock();                                                                          
+      /// DEBUG only, will replace later 
+      Stmt* ParsePrint();
+      Stmt* ParseIf();
+      Stmt* ParseWhile();
+      Stmt* ParseFor();
+      Stmt* ParseReturn();
                                                                                                    
       Expr* ParseExpression();                                                                     
-                                                                                                   
-      /// parses addition and subctraction                                                         
-      ///   binary expressions                                                                     
+      Expr* ParseAssignment();
+      Expr* ParseOr();
+      Expr* ParseAnd();
+      Expr* ParseEquality();
+      Expr* ParseComparison();
       Expr* ParseTerm();
-      /// parses multiplication and division
-      ///  binary expressions
       Expr* ParseFactor();
+      Expr* ParseCall();
+      Expr* FinishCall(Expr* callee);
       Expr* ParseLiteral();
       Expr* ResolveExpr();
+
+      Expr* ParseArrayExpr(Token size);
+      Expr* ParseArrayAccess(Expr* expr);
+      Expr* ParseStructAccess(Expr* expr);
 
       Token Peek() const;
       Token Previous() const;
@@ -62,8 +88,10 @@ namespace ylang {
       bool Match(const std::vector<TokenType>& types , bool advance = true);
       bool MatchLiterals(bool advance = true);
       bool MatchTypes(bool advance = true);
+      bool DeclaredType(const Token& type) const;
 
       void Sync();
+      Stmt* RecoverFrom(TokenType type , std::vector<Stmt*>& stmts);
 
       ParserError Error(const std::string& message) const;
   };

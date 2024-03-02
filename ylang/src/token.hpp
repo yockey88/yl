@@ -8,12 +8,31 @@
 namespace ylang {
 
   struct Token {
+    Token() = default;
     constexpr Token(SourceLocation loc , TokenType type, const std::string& value) 
       : loc(loc) , type(type), value(value) {}
 
+    Token(Token&& other) 
+      : loc(other.loc) , type(other.type), value(std::move(other.value)) {}
+    Token(const Token& other) 
+      : loc(other.loc) , type(other.type), value(other.value) {}
+    Token& operator=(Token&& other) {
+      loc = other.loc;
+      type = other.type;
+      value = std::move(other.value);
+      return *this;
+    }
+
+    Token& operator=(const Token& other) {
+      loc = other.loc;
+      type = other.type;
+      value = other.value;
+      return *this;
+    }
+
     SourceLocation loc;
-    const TokenType type;
-    const std::string value;
+    TokenType type;
+    std::string value;
   };
 
   static size_t GetTypeSize(TokenType type) {

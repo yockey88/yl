@@ -1,10 +1,9 @@
 #ifndef YL_VM_HPP
 #define YL_VM_HPP
 
-#include <stack>
-
 #include "vm/register.hpp"
 #include "compiler/assembly.hpp"
+#include "env/environment.hpp"
 
 namespace ylang {
 
@@ -12,7 +11,6 @@ namespace ylang {
   
   constexpr static uint8_t kRegisterSize = sizeof(Register);
   constexpr static uint32_t kRegisterMemoryOffset = kRegisterSize * kRegisterCount;
-  constexpr static uint32_t kMemorySize = kRegisterMemoryOffset + kHeapMemorySize;
   constexpr static uint32_t kNumInstructions = InstructionType::NUM_OP_CODES + 1;
 
   class VM {
@@ -29,10 +27,6 @@ namespace ylang {
 
       std::vector<Chunk> chunks;
 
-      std::stack<Value> stack;
-
-      uint8_t memory[kHeapMemorySize] = {0}; 
-
       Register* registers[kRegisterCount];
 
       void AllocateMemory();
@@ -44,7 +38,6 @@ namespace ylang {
       void Write(Operand& op, const Value& val);
 
       void DumpMemory();
-      void DumpRegisters();
 
       void ExecUnaryOp(InstructionType type);
       void ExecBinaryOp(InstructionType type);

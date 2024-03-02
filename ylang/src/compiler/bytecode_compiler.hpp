@@ -21,12 +21,24 @@ namespace ylang {
       void Visit(LiteralExpr& expr) override;
       void Visit(UnaryExpr& expr) override;
       void Visit(BinaryExpr& expr) override;
+      void Visit(CallExpr& expr) override;
       void Visit(GroupingExpr& expr) override;
       void Visit(VarExpr& expr) override;
+      void Visit(AssignExpr& expr) override;
+      void Visit(ArrayExpr& expr) override;
+      void Visit(ArrayAccessExpr& expr) override;
+      void Visit(ObjAccessExpr& expr) override;
 
       void Visit(ExprStmt& stmt) override;
       void Visit(VarDeclStmt& stmt) override;
+      void Visit(ArrayDeclStmt& stmt) override;
       void Visit(BlockStmt& stmt) override;
+      void Visit(PrintStmt& stmt) override;
+      void Visit(IfStmt& stmt) override;
+      void Visit(WhileStmt& stmt) override;
+      void Visit(ReturnStmt& stmt) override;
+      void Visit(FunctionStmt& stmt) override;
+      void Visit(StructStmt& stmt) override;
 
     private:
       friend class BytecodeCompiler;
@@ -35,13 +47,18 @@ namespace ylang {
 
       std::stack<address_t> addr_stack;
       std::stack<Token> token_stack;
+      std::stack<Value> value_stack;
       std::stack<Operand> operand_stack;
 
       address_t cursor{ 0 };
+      address_t stack_cursor{ 0 }; 
+
+      bool in_var_decl{ false }; 
+      bool return_stmt{ false };
+      const std::string* current_var_name{ nullptr };
 
       void EmitOp(InstructionType type);
 
-      void EmitLiteral(Token value);
       void EmitUnaryOp(InstructionType type , Expr* expr);
       void EmitBinaryOp(InstructionType type , Expr* lhs , Expr* rhs);
   }; 
@@ -54,7 +71,12 @@ namespace ylang {
 
       Assembly Compile();
 
-      address_t WriteVariable(Token name);
+      Assembly& GetAssembly() { return assembly; }
+
+      address_t stack_cursor{ 0 };
+
+      address_t WriteVariable(Token name , Value value);
+      address_t AccessVariable(Token name);
       RegisterType WriteRegister();
 
     private:
@@ -64,8 +86,8 @@ namespace ylang {
 
       Chunk* current_chunk;
       Assembly assembly;
+      std::stack<Variable> scope_stack;
 
-      address_t stack_cursor{ 0 };
       uint8_t current_register = RegisterType::R12;
 
       void EmitInstruction(Instruction type);

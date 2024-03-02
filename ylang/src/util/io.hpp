@@ -17,7 +17,7 @@ namespace ylang {
   }
 
   template <typename... Args>
-  std::string_view fmtstr(std::string_view fmt, Args &&...args) {
+  std::string fmtstr(std::string_view fmt, Args &&...args) {
     return fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
   }
 

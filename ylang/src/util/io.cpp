@@ -12,18 +12,13 @@ namespace ylang {
   }
 
   void printinstr(Instruction* inst) {
-    // std::string str = fmt::format(fmt::runtime("{}"), kInstructionMap[inst->type]);
-    // if (inst->lhs.has_value()) {
-    //   if (*inst->lhs < kRegisterCount) {
-    //     str += fmt::format(fmt::runtime(" lhs: {}"), RegisterStrings[*inst->lhs]);
-    //   } else {
-    //     str += fmt::format(fmt::runtime(" lhs: {}"), *inst->lhs);
-    //   }
-    // }
-    // if (inst->rhs.has_value()) {
-    //   str += fmt::format(fmt::runtime(" rhs: {}"), inst->rhs.value());
-    // }
-    // std::cout << str << std::endl;
+    std::string str = fmt::format(fmt::runtime("{}"), kInstructionMap[inst->type]);
+    if (IsBinary(inst->type)) {
+      str += fmt::format(fmt::runtime(" LHS {} RHS {}"), *inst->lhs, *inst->rhs);
+    } else if (IsUnary(inst->type)) {
+      str += fmt::format(fmt::runtime(" RHS {}"), *inst->rhs);
+    } else {
+    }
   }
 
   void printaddr(uint64_t addr , uint8_t* memory) {

@@ -4,6 +4,52 @@
 #include "util/io.hpp"
 
 namespace ylang {
+      
+  void Value::WriteSValue(Value& value , const int64_t& val) {
+    switch (value.size) {
+      case BYTE:
+        value.type = I8;
+        value.value = static_cast<int8_t>(val);
+      break;
+      case WORD:
+        value.type = I16;
+        value.value = static_cast<int16_t>(val);
+      break;
+      case DWORD:
+        value.type = I32;
+        value.value = static_cast<int32_t>(val);
+      break;
+      case QWORD:
+        value.type = I64;  
+        value.value = static_cast<int64_t>(val);
+      break;
+      default:
+        throw RuntimeError("Unknown size in WriteSValue");
+    }
+  }
+
+  void Value::WriteUValue(Value& value , const uint64_t& val) {
+    switch (value.size) {
+      case BYTE:
+        value.type = U8;
+        value.value = static_cast<uint8_t>(val);
+      break;
+      case WORD:
+        value.type = U16;
+        value.value = static_cast<uint16_t>(val);
+      break;
+      case DWORD:
+        value.type = U32;
+        value.value = static_cast<uint32_t>(val);
+      break;
+      case QWORD:
+        value.type = U64;
+        value.value = static_cast<uint64_t>(val);
+      break;
+      default:
+        throw RuntimeError("Unknown size in WriteUValue");
+    }
+  }
 
   uint8_t* Value::AsBytes() {
     return std::visit([](auto&& arg) -> uint8_t* {
@@ -124,7 +170,8 @@ namespace ylang {
       } else if constexpr (std::is_same_v<T, double>) {
         return static_cast<float>(arg);
       } else if constexpr (std::is_same_v<T, bool>) {
-        return arg ? 1.0f : 0.0f;
+        return arg ? 
+          1.0f : 0.0f;
       } else if constexpr (std::is_same_v<T, address_t> || std::is_same_v<T , RegisterType>) {
         throw RuntimeError("Cannot convert register to float");
       } else if constexpr (std::is_same_v<T , std::monostate>){
@@ -265,6 +312,66 @@ namespace ylang {
         throw RuntimeError("Unknown type in AsBool");
       }
     }, value);
+  }
+
+  char Value::AsChar() const {
+    return std::visit([](auto&& arg) -> char {
+      using T = std::decay_t<decltype(arg)>;
+      if constexpr (std::is_same_v<T , bool>) {
+        return arg ? 1 : 0;
+      } else if constexpr (std::is_same_v<T , char>) {
+        return arg;
+      } else if constexpr (std::is_same_v<T , int8_t>) {
+        return static_cast<char>(arg);
+      } else if constexpr (std::is_same_v<T, bool>) {
+        return arg ? 1 : 0;
+      } else if constexpr (std::is_same_v<T , std::monostate>){
+        return 0;
+      } else {
+        throw RuntimeError("Unknown type in AsChar");
+      }
+    }, value);
+  }
+
+  std::string Value::AsString() const {
+    std::string result;
+    std::visit([&result](auto&& arg) {
+      using T = std::decay_t<decltype(arg)>;
+      if constexpr (std::is_same_v<T , bool>) {
+        result = arg ? "true" : "false";
+      } else if constexpr (std::is_same_v<T , char>) {
+        result = std::string(1 , arg);
+      } else if constexpr (std::is_same_v<T , int8_t>) {
+        result = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T, int16_t>) {
+        result = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T, int32_t>) {
+        result = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T, int64_t>) {
+         result = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T, uint8_t>) {
+        result = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T, uint16_t>) {
+        result = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T, uint32_t>) {
+        result = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T, uint64_t>) {
+        result = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T, float>) {
+        result = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T, double>) {
+        result = std::to_string(arg);
+      } else if constexpr (std::is_same_v<T, address_t>) {
+        result = fmtstr("[{:#08x}]" , arg.address);
+      } else if constexpr (std::is_same_v<T , RegisterType>) {
+        result = RegisterStrings[arg];
+      } else if constexpr (std::is_same_v<T , std::monostate>){
+        result = "nil";
+      } else {
+        throw RuntimeError("Unknown type in AsString");
+      }
+    }, value);
+    return result;
   }
 
   Value::Value(Value&& rhs) 
@@ -504,6 +611,9 @@ namespace ylang {
     return type == Type::BOOL;
   }
 
+  bool Value::IsChar() const {
+    return type == Type::CHAR;
+  }
 
   bool Value::IsAddress() const {
     return type == Type::ADDRESS;
@@ -511,6 +621,14 @@ namespace ylang {
 
   bool Value::IsRegister() const {
     return type == Type::REGISTER;
+  }
+      
+  bool Value::IsString() const {
+    return type == Type::STRING;
+  }
+
+  bool Value::IsArray() const {
+    return type == Type::ARRAY;
   }
 
   bool Value::TypesCompatible(const Value& rhs) const {
@@ -532,6 +650,78 @@ namespace ylang {
   Value Value::CreateValue(const Token& token) {
     Value value;
     switch (token.type) {
+      case TokenType::I8: {
+        value.size = BYTE;
+        value.type = Type::I8;
+        value.value = 0;
+        return value;
+      }
+
+      case TokenType::U8: {
+        value.size = BYTE;
+        value.type = Type::U8;
+        value.value = 0;
+        return value;
+      }
+
+      case TokenType::I16: {
+        value.size = WORD;
+        value.type = Type::I16;
+        value.value = 0;
+        return value;
+      }
+
+      case TokenType::U16: {
+        value.size = WORD;
+        value.type = Type::U16;
+        value.value = 0;
+        return value;
+      }
+
+      case TokenType::I32: {
+        value.size = DWORD;
+        value.type = Type::I32;
+        value.value = 0;
+        return value;
+      }
+
+      case TokenType::U32: {
+        value.size = DWORD;
+        value.type = Type::U32;
+        value.value = 0;
+        return value;
+      }
+
+      case TokenType::I64: {
+        value.size = QWORD;
+        value.type = Type::I64;
+        value.value = 0;
+        return value;
+      }
+
+      case TokenType::U64: {
+        value.size = QWORD;
+        value.type = Type::U64;
+        value.value = 0;
+        return value;
+      }
+
+      case TokenType::F32: {
+        value.size = DWORD;
+        value.type = Type::F32;
+        value.value = 0.0f;
+        return value;
+      }
+
+      case TokenType::F64: {
+        value.size = QWORD;
+        value.type = Type::F64;
+        value.value = 0.0;
+        return value;
+      }
+
+      case TokenType::TRUE:
+      case TokenType::FALSE:
       case TokenType::BOOL: {
         value.size = BYTE;
         value.type = Type::BOOL;
@@ -539,15 +729,12 @@ namespace ylang {
         return value;
       }
 
+      case TokenType::CHARL:
       case TokenType::CHAR: {
         value.size = BYTE;
-        value.type = Type::I8;
+        value.type = Type::CHAR;
         Write(value, token.value[0]);
         return value;
-      }
-
-      case TokenType::STRING: {
-        throw RuntimeError("UNIMPLEMENTED : Cannot create value from string");
       }
 
       case SINTEGER: {
@@ -628,6 +815,22 @@ namespace ylang {
       default:
         throw RuntimeError("Invalid token type");
     }
+  }
+      
+  Value Value::CreateValue(bool val) {
+    Value v;
+    v.size = BYTE;
+    v.type = Type::BOOL;
+    Write(v, val);
+    return v;
+  }
+      
+  Value Value::CreateValue(char val) {
+    Value v;
+    v.size = BYTE;
+    v.type = Type::CHAR;
+    Write(v, val);
+    return v;
   }
 
   Value Value::CreateValue(const address_t& value) {
@@ -715,7 +918,31 @@ namespace ylang {
       }
     }
 
-    throw RuntimeError("No common type found");
+    throw RuntimeError(fmtstr("No common type found {} and {}" , lhs , rhs));
+  }
+      
+  WordSize Value::ResolveSWordSize(int64_t size) {
+    if (size >= std::numeric_limits<int8_t>::min() && size <= std::numeric_limits<int8_t>::max()) {
+      return BYTE;
+    } else if (size >= std::numeric_limits<int16_t>::min() && size <= std::numeric_limits<int16_t>::max()) {
+      return WORD;
+    } else if (size >= std::numeric_limits<int32_t>::min() && size <= std::numeric_limits<int32_t>::max()) {
+      return DWORD;
+    } else {
+      return QWORD;
+    }
+  }
+  
+  WordSize Value::ResolveUWordSize(uint64_t size) {
+    if (size <= std::numeric_limits<uint8_t>::max()) {
+      return BYTE;
+    } else if (size <= std::numeric_limits<uint16_t>::max()) {
+      return WORD;
+    } else if (size <= std::numeric_limits<uint32_t>::max()) {
+      return DWORD;
+    } else {
+      return QWORD;
+    }
   }
 
   Value::Type Value::UnsignedToSigned(Value::Type type) {
@@ -875,6 +1102,10 @@ namespace ylang {
       return lhs.AsRegister() == rhs.AsRegister();
     }
 
+    if (lhs.IsChar() && (rhs.IsChar() || rhs.IsUnsigned())) {
+      return lhs.AsChar() == rhs.AsChar();
+    }
+
     throw RuntimeError("Invalid == comparison between values");
   }
 
@@ -890,6 +1121,14 @@ namespace ylang {
     return !(lhs < rhs);
   }
 
+  bool operator&&(const Value& lhs , const Value& rhs) {
+    return lhs.AsBool() && rhs.AsBool();
+  }
+
+  bool operator||(const Value& lhs , const Value& rhs) {
+    return lhs.AsBool() || rhs.AsBool();
+  }
+
   Value operator+(const Value& lhs , const Value& rhs) {
     if (!lhs.TypesCompatible(rhs)) {
       throw RuntimeError("Invalid operation , between incompatible types");
@@ -897,15 +1136,6 @@ namespace ylang {
 
     Value v;
     v.type = GetCommonType(lhs, rhs);
-    switch (Value::GetTypeSize(v.type)) {
-      case 1: v.size = BYTE; break;
-      case 2: v.size = WORD; break;
-      case 4: v.size = DWORD; break;
-      case 8: v.size = QWORD; break;
-      default:
-        throw RuntimeError("Invalid type size adding values");
-    }
-
     switch (v.type) {
       case Value::Type::BOOL: {
         bool result = lhs.AsBool() + rhs.AsBool();
@@ -917,68 +1147,36 @@ namespace ylang {
         throw RuntimeError("Invalid + operation between char values");
       }
 
-      case Value::Type::I8: {
-        int64_t result = lhs.AsSInt() + rhs.AsSInt();
-        int8_t result8 = static_cast<uint8_t>(result);
-        Value::Write(v , result8);
-        return v;
-      }
-
-      case Value::Type::U8: {
-        uint64_t result = lhs.AsUInt() + rhs.AsUInt();
-        uint8_t result8 = static_cast<uint8_t>(result);
-        Value::Write(v , result8);
-        return v;
-      }
-
-      case Value::Type::I16: {
-        int64_t result = lhs.AsSInt() + rhs.AsSInt();
-        int16_t result16 = static_cast<int16_t>(result);
-        Value::Write(v , result16);
-        return v;
-      }                            
-
-      case Value::Type::U16: {
-        uint64_t result = lhs.AsUInt() + rhs.AsUInt();
-        uint16_t result16 = static_cast<uint16_t>(result);
-        Value::Write(v , result16);
-        return v;
-      }
-
-      case Value::Type::I32: {
-        int64_t result = lhs.AsSInt() + rhs.AsSInt();
-        int32_t result32 = static_cast<int32_t>(result);
-        Value::Write(v , result32);
-        return v;
-      }
-
-      case Value::Type::U32: {
-        uint64_t result = lhs.AsUInt() + rhs.AsUInt();
-        uint32_t result32 = static_cast<uint32_t>(result);
-        Value::Write(v , result32);
-        return v;
-      }
-
+      case Value::Type::I8:
+      case Value::Type::I16:
+      case Value::Type::I32:
       case Value::Type::I64: {
         int64_t result = lhs.AsSInt() + rhs.AsSInt();
-        Value::Write(v , result);
+        v.size = Value::ResolveSWordSize(result);
+        Value::WriteSValue(v , result);
         return v;
       }
 
+      case Value::Type::U8:
+      case Value::Type::U16:
+      case Value::Type::U32:
       case Value::Type::U64: {
         uint64_t result = lhs.AsUInt() + rhs.AsUInt();
-        Value::Write(v , result);
+        v.size = Value::ResolveUWordSize(result);
+        Value::WriteUValue(v , result);
         return v;
       }
 
       case Value::Type::F32: {
         float result = lhs.AsFloat() + rhs.AsFloat();
+        v.size = DWORD;
         Value::Write(v , result);
         return v;
       }
 
       case Value::Type::F64: {
         double result = lhs.AsDouble() + rhs.AsDouble();
+        v.size = QWORD;
         Value::Write(v , result);
         return v;
       }
@@ -986,8 +1184,13 @@ namespace ylang {
       case Value::Type::ADDRESS: 
       case Value::Type::REGISTER: {
         address_t result = lhs.AsAddress() + rhs.AsAddress();
+        v.size = QWORD;
         Value::Write(v , result);
         return v;
+      }
+
+      case Value::Type::ARRAY: {
+        throw RuntimeError("Invalid + operation between array values");
       }
 
       default:
@@ -1009,15 +1212,6 @@ namespace ylang {
       v.type = Value::UnsignedToSigned(v.type);
     }
 
-    switch (Value::GetTypeSize(v.type)) {
-      case 1: v.size = BYTE; break;
-      case 2: v.size = WORD; break;
-      case 4: v.size = DWORD; break;
-      case 8: v.size = QWORD; break;
-      default:
-        throw RuntimeError("Invalid type size adding values");
-    }
-
     switch (v.type) {
       case Value::Type::BOOL: {
         bool result = lhs.AsBool() - rhs.AsBool();
@@ -1029,85 +1223,23 @@ namespace ylang {
         throw RuntimeError("Invalid - operation between char values");
       }
 
-      case Value::Type::I8: {
-        int64_t result = lhs.AsSInt() - rhs.AsSInt();
-        int8_t result8 = static_cast<uint8_t>(result);
-        Value::Write(v , result8);
-        return v;
-      }
-
-      case Value::Type::U8: {
-        int64_t result = lhs.AsUInt() - rhs.AsUInt();
-
-        if (result < 0) {
-          int8_t result8 = static_cast<int8_t>(result);
-          Value::Write(v , result8);
-          return v;
-        }
-
-        uint8_t result8 = static_cast<uint8_t>(result);
-        Value::Write(v , result8);
-        return v;
-      }
-
-      case Value::Type::I16: {
-        int64_t result = lhs.AsSInt() - rhs.AsSInt();
-        int16_t result16 = static_cast<int16_t>(result);
-        Value::Write(v , result16);
-        return v;
-      }                            
-
-      case Value::Type::U16: {
-        int64_t result = lhs.AsUInt() - rhs.AsUInt();
-
-        if (result < 0) {
-          int16_t result16 = static_cast<int16_t>(result);
-          Value::Write(v , result16);
-          return v;
-        }
-
-        uint16_t result16 = static_cast<uint16_t>(result);
-        Value::Write(v , result16);
-        return v;
-      }
-
-      case Value::Type::I32: {
-        int64_t result = lhs.AsSInt() - rhs.AsSInt();
-        int32_t result32 = static_cast<int32_t>(result);
-        Value::Write(v , result32);
-        return v;
-      }
-
-      case Value::Type::U32: {
-        int64_t result = lhs.AsUInt() - rhs.AsUInt();
-
-        if (result < 0) {
-          int32_t result32 = static_cast<int32_t>(result);
-          Value::Write(v , result32);
-          return v;
-        }
-
-        uint32_t result32 = static_cast<uint32_t>(result);
-        Value::Write(v , result32);
-        return v;
-      }
-
+      case Value::Type::I8:
+      case Value::Type::I16:
+      case Value::Type::I32:
       case Value::Type::I64: {
         int64_t result = lhs.AsSInt() - rhs.AsSInt();
-        Value::Write(v , result);
+        v.size = Value::ResolveSWordSize(result);
+        Value::WriteSValue(v , result);
         return v;
       }
 
+      case Value::Type::U8:
+      case Value::Type::U16:
+      case Value::Type::U32:
       case Value::Type::U64: {
-        int64_t result = lhs.AsUInt() - rhs.AsUInt();
-
-        if (result < 0) {
-          Value::Write(v , result);
-          return v;
-        }
-
-        uint64_t result64 = static_cast<uint64_t>(result);
-        Value::Write(v , result64);
+        uint64_t result = lhs.AsUInt() - rhs.AsUInt();
+        v.size = Value::ResolveUWordSize(result);
+        Value::WriteUValue(v , result);
         return v;
       }
 
@@ -1144,14 +1276,6 @@ namespace ylang {
 
     Value v;
     v.type = GetCommonType(lhs, rhs);
-    switch (Value::GetTypeSize(v.type)) {
-      case 1: v.size = BYTE; break;
-      case 2: v.size = WORD; break;
-      case 4: v.size = DWORD; break;
-      case 8: v.size = QWORD; break;
-      default:
-        throw RuntimeError("Invalid type size adding values");
-    }
 
     switch (v.type) {
       case Value::Type::BOOL: {
@@ -1164,57 +1288,23 @@ namespace ylang {
         throw RuntimeError("Invalid * operation between char values");
       }
 
-      case Value::Type::I8: {
-        int64_t result = lhs.AsSInt() * rhs.AsSInt();
-        int8_t result8 = static_cast<uint8_t>(result);
-        Value::Write(v , result8);
-        return v;
-      }
-
-      case Value::Type::U8: {
-        uint64_t result = lhs.AsUInt() * rhs.AsUInt();
-        uint8_t result8 = static_cast<uint8_t>(result);
-        Value::Write(v , result8);
-        return v;
-      }
-
-      case Value::Type::I16: {
-        int64_t result = lhs.AsSInt() * rhs.AsSInt();
-        int16_t result16 = static_cast<int16_t>(result);
-        Value::Write(v , result16);
-        return v;
-      }                            
-
-      case Value::Type::U16: {
-        uint64_t result = lhs.AsUInt() * rhs.AsUInt();
-        uint16_t result16 = static_cast<uint16_t>(result);
-        Value::Write(v , result16);
-        return v;
-      }
-
-      case Value::Type::I32: {
-        int64_t result = lhs.AsSInt() * rhs.AsSInt();
-        int32_t result32 = static_cast<int32_t>(result);
-        Value::Write(v , result32);
-        return v;
-      }
-
-      case Value::Type::U32: {
-        uint64_t result = lhs.AsUInt() * rhs.AsUInt();
-        uint32_t result32 = static_cast<uint32_t>(result);
-        Value::Write(v , result32);
-        return v;
-      }
-
+      case Value::Type::I8:
+      case Value::Type::I16:
+      case Value::Type::I32:
       case Value::Type::I64: {
         int64_t result = lhs.AsSInt() * rhs.AsSInt();
-        Value::Write(v , result);
+        v.size = Value::ResolveSWordSize(result);
+        Value::WriteSValue(v , result);
         return v;
       }
 
+      case Value::Type::U8:
+      case Value::Type::U16:
+      case Value::Type::U32:
       case Value::Type::U64: {
         uint64_t result = lhs.AsUInt() * rhs.AsUInt();
-        Value::Write(v , result);
+        v.size = Value::ResolveUWordSize(result);
+        Value::WriteUValue(v , result);
         return v;
       }
 
@@ -1248,14 +1338,6 @@ namespace ylang {
 
     Value v;
     v.type = GetCommonType(lhs, rhs);
-    switch (Value::GetTypeSize(v.type)) {
-      case 1: v.size = BYTE; break;
-      case 2: v.size = WORD; break;
-      case 4: v.size = DWORD; break;
-      case 8: v.size = QWORD; break;
-      default:
-        throw RuntimeError("Invalid type size adding values");
-    }
 
     switch (v.type) {
       case Value::Type::BOOL: {
@@ -1268,57 +1350,23 @@ namespace ylang {
         throw RuntimeError("Invalid / operation between char values");
       }
 
-      case Value::Type::I8: {
-        int64_t result = lhs.AsSInt() / rhs.AsSInt();
-        int8_t result8 = static_cast<uint8_t>(result);
-        Value::Write(v , result8);
-        return v;
-      }
-
-      case Value::Type::U8: {
-        uint64_t result = lhs.AsUInt() / rhs.AsUInt();
-        uint8_t result8 = static_cast<uint8_t>(result);
-        Value::Write(v , result8);
-        return v;
-      }
-
-      case Value::Type::I16: {
-        int64_t result = lhs.AsSInt() / rhs.AsSInt();
-        int16_t result16 = static_cast<int16_t>(result);
-        Value::Write(v , result16);
-        return v;
-      }                            
-
-      case Value::Type::U16: {
-        uint64_t result = lhs.AsUInt() / rhs.AsUInt();
-        uint16_t result16 = static_cast<uint16_t>(result);
-        Value::Write(v , result16);
-        return v;
-      }
-
-      case Value::Type::I32: {
-        int64_t result = lhs.AsSInt() / rhs.AsSInt();
-        int32_t result32 = static_cast<int32_t>(result);
-        Value::Write(v , result32);
-        return v;
-      }
-
-      case Value::Type::U32: {
-        uint64_t result = lhs.AsUInt() / rhs.AsUInt();
-        uint32_t result32 = static_cast<uint32_t>(result);
-        Value::Write(v , result32);
-        return v;
-      }
-
+      case Value::Type::I8:
+      case Value::Type::I16:
+      case Value::Type::I32:
       case Value::Type::I64: {
         int64_t result = lhs.AsSInt() / rhs.AsSInt();
-        Value::Write(v , result);
+        v.size = Value::ResolveSWordSize(result);
+        Value::WriteSValue(v , result);
         return v;
       }
 
+      case Value::Type::U8:
+      case Value::Type::U16:
+      case Value::Type::U32:
       case Value::Type::U64: {
         uint64_t result = lhs.AsUInt() / rhs.AsUInt();
-        Value::Write(v , result);
+        v.size = Value::ResolveUWordSize(result);
+        Value::WriteUValue(v , result);
         return v;
       }
 

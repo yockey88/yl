@@ -68,6 +68,26 @@ namespace {
       }
   };
 
+  class InterpreterError : public std::runtime_error {
+    public:
+      InterpreterError(const std::string &message)
+          : std::runtime_error(message) {}
+    
+      const char *what() const noexcept override {
+        return std::runtime_error::what();
+      }
+  };
+
+  class InternalError : public std::runtime_error {
+    public:
+      InternalError(const std::string &message)
+          : std::runtime_error(message) {}
+    
+      const char *what() const noexcept override {
+        return std::runtime_error::what();
+      }
+  };
+
 } // namespace ylang
 
 #endif // !YL_ERRORS_HPP

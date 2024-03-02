@@ -83,6 +83,9 @@ struct fmt::formatter<ylang::Operand> : fmt::formatter<std::string_view> {
           case ylang::Value::F64: {
             val_str = fmt::format(fmt::runtime("{}") , op.val.As<double>());
           } break;
+          case ylang::Value::NIL: {
+            val_str = "NIL";
+          } break;
           default: break;
         }
       } break;
@@ -91,12 +94,16 @@ struct fmt::formatter<ylang::Operand> : fmt::formatter<std::string_view> {
       } break;
       case OperandType::DIRECT: {
         switch (op.val.type) {
-          // case ylang::Value::ADDRESS: {
-          //   val_str = ylang::fmtstr("{:#08x}" , op.val.As<ylang::address_t>().address);
-          // } break;
-          // case ylang::Value::REGISTER: {
-          //   val_str = ylang::fmtstr("{}" , ylang::RegisterStrings[op.val.As<RegisterType>()]);
-          // } break;
+          case ylang::Value::ADDRESS: {
+            std::string_view fmt_str = op.val.As<ylang::address_t>().address >= ylang::kHeapStart ? 
+              "[{:#06x}]" : 
+              op.val.As<ylang::address_t>().address == 0 ?
+                "[RBP]" : "[RBP - {:#02x}]";
+            val_str = ylang::fmtstr(fmt_str , op.val.As<ylang::address_t>().address);
+          } break;
+          case ylang::Value::REGISTER: {
+            val_str = ylang::fmtstr("[{}]" , ylang::RegisterStrings[op.val.As<RegisterType>()]);
+          } break;
           default: break;
         }
       } break;

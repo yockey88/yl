@@ -35,17 +35,24 @@ namespace ylang {
     // keywords
     BOOL , 
     CHAR , STRING ,
-    SINTEGER , INTEGER ,
     I8 , I16 , I32 , I64,
     U8 , U16 , U32 , U64,
     F32 , F64,
     TRUE, FALSE,
+    NIL ,
+
+    PRINT,
+    IF , ELSE , WHILE , FOR ,
     RETURN ,  
+
+    STRUCT , 
 
     // identifier
     IDENTIFIER,
 
     //literals 
+    CHARL , STRINGL ,
+    SINTEGER , INTEGER ,
     FLOAT,
     DOUBLE,
     ADDRESS,
@@ -56,13 +63,29 @@ namespace ylang {
     CLOSE_PAREN,
     OPEN_BRACE,
     CLOSE_BRACE,
+    OPEN_BRACKET,
+    CLOSE_BRACKET,
     PLUS,
     MINUS,
     STAR,
     F_SLASH,
     EQUAL,
+    EQUAL_EQUAL,
+    GREATER,
+    GREATER_EQUAL,
+    LESS,
+    LESS_EQUAL,
+    BANG,
+    BANG_EQUAL,
+    LOGICAL_AND,
+    LOGICAL_OR,
     SEMICOLON,
     COLON,
+    COMMA,
+    QUOTE,
+    DQUOTE,
+    DOT,
+
     END,
   
     NUM_TOKEN_TYPES,
@@ -72,12 +95,24 @@ namespace ylang {
     LITERAL_EXPR,
     UNARY_EXPR,
     BINARY_EXPR,
+    CALL_EXPR,
     GROUPING_EXPR,
     VAR_EXPR,
+    ASSIGN_EXPR,
+    ARRAY_EXPR,
+    ARRAY_ACCESS_EXPR,
+    OBJ_ACCESS_EXPR,
   
     EXPRESSION_STMT,
     VAR_DECL_STMT,
+    ARRAY_DECL_STMT,
     BLOCK_STMT,
+    PRINT_STMT,
+    IF_STMT,
+    WHILE_STMT,
+    RETURN_STMT,
+    FUNCTION_STMT,
+    STRUCT_STMT,
   
     NUM_NODE_TYPES,
   };
@@ -114,6 +149,8 @@ namespace ylang {
     PARSER, 
     COMPILER, 
     RUNTIME, 
+    INTERPRETER,
+    INTERNAL,
   
     NUM_ERROR_TYPES
   };
@@ -138,7 +175,7 @@ namespace ylang {
     RIP = 0x10 ,
   };
 
-  enum WordSize : uint8_t {
+  enum WordSize : size_t {
     BYTE = 1,
     WORD = 2,
     DWORD = 4,
@@ -160,8 +197,6 @@ namespace ylang {
     EMPTY = NUM_OPERAND_TYPES 
   };
   
-  enum class ExitCode { OK = 0, ERR = 1 };
-  
   constexpr uint8_t kBitsInByte = 8;
 
   constexpr uint8_t kDigitCount = 10;
@@ -170,7 +205,13 @@ namespace ylang {
   constexpr static uint8_t kRegisterCount = RegisterType::RIP + 1;
 
   constexpr static uint8_t kRegisterMemorySize = QWORD * kBitsInByte;
-  constexpr static uint32_t kHeapMemorySize = 0xFFFF;
+
+  constexpr static uint32_t kStackMemorySize = 0xFF;
+  constexpr static uint32_t kHeapMemorySize = 0x00FFFF;
+
+  constexpr static uint32_t kHeapStart = kStackMemorySize;
+
+  constexpr static uint32_t kMemorySize = kStackMemorySize + kHeapMemorySize;
   
   constexpr uint32_t kTokenTypeCount = TokenType::NUM_TOKEN_TYPES + 1;
   constexpr std::array<std::string_view, kTokenTypeCount> TokenTypeStrings = {
@@ -182,10 +223,17 @@ namespace ylang {
     "U8", "U16", "U32", "U64",
     "F32", "F64",
     "TRUE", "FALSE",
+    "NIL",
+
+    "PRINT",
+    "IF" , "ELSE" , "WHILE" , "FOR", 
     "RETURN",
+
+    "STRUCT",
 
     "IDENTIFIER",
 
+    "CHARL", "STRINGL",
     "SINTEGER", "INTEGER",
     "FLOAT",
     "DOUBLE",
@@ -196,13 +244,29 @@ namespace ylang {
     "CLOSE_PAREN",
     "OPEN_BRACE",
     "CLOSE_BRACE",
+    "OPEN_BRACKET",
+    "CLOSE_BRACKET",
     "PLUS",
     "MINUS",
     "STAR",
     "F_SLASH",
     "EQUAL",
+    "EQUAL_EQUAL",
+    "GREATER",
+    "GREATER_EQUAL",
+    "LESS",
+    "LESS_EQUAL",
+    "BANG",
+    "BANG_EQUAL",
+    "LOGICAL_AND",
+    "LOGICAL_OR",
     "SEMICOLON",
     "COLON",
+    "COMMA",
+    "QUOTE",
+    "DQUOTE",
+    "DOT",
+
     "END",
   
     "INVALID",
@@ -213,12 +277,24 @@ namespace ylang {
     "LITERAL_EXPR",
     "UNARY_EXPR",
     "BINARY_EXPR",
+    "CALL_EXPR",
     "GROUPING_EXPR",
     "VAR_EXPR",
+    "ASSIGN_EXPR",
+    "ARRAY_EXPR",
+    "ARRAY_ACCESS_EXPR",
+    "OBJ_ACCESS_EXPR",
   
     "EXPRESSION_STMT",
     "VAR_DECL_STMT",
+    "ARRAY_DECL_STMT",
     "BLOCK_STMT",
+    "PRINT_STMT",
+    "IF_STMT",
+    "WHILE_STMT",
+    "RETURN_STMT",
+    "FUNCTION_STMT",
+    "STRUCT_STMT",
   
     "INVALID_NODE",
   };
@@ -230,6 +306,8 @@ namespace ylang {
     "PARSER",
     "COMPILER",
     "RUNTIME",
+    "INTERPRETER",
+    "INTERNAL",
   
     "INVALID_ERROR_TYPE",
   };
@@ -262,8 +340,8 @@ namespace ylang {
   };
   
   constexpr std::array<std::string_view, kRegisterCount> RegisterStrings = {
-    "RAX" , "RBX" , "RCX" , "RDX" , "RSI" , "RDI" , "RBP" , 
-    "R8"  , "R9"  , "R10" , "R11" , "R12" , "R13" , "R14" , "R15" ,"RSP" , "RIP"
+    "RAX", "RBX", "RCX", "RDX", "RSI", "RDI", "R8", "R9",
+    "R10", "R11", "R12", "R13", "R14", "R15", "RBP", "RSP", "RIP"
   };
   
   static std::map<WordSize , std::string_view> WordSizeStrings = {
@@ -284,9 +362,10 @@ namespace ylang {
     "EMPTY",
   };
   
-  constexpr uint32_t kOperatorCount = 11;
+  constexpr uint32_t kOperatorCount = 22;
   constexpr std::array<char, kOperatorCount> kOperators = {
-    '{' , '}' , '(' , ')' , '+', '-', '*', '/' , '=' , ';', ':'
+    '{' , '}' , '(' , ')' , '[' , ']' , '+', '-', '*', '/' , '=' , '<' , '>' , '!' ,
+    '&', '|', ';', ':' , ',' , '\'' , '"' , '.' 
   };
   
   struct SourceLocation {
@@ -294,6 +373,8 @@ namespace ylang {
     uint32_t line = 1;
     uint32_t column = 1;
   };
+
+  class Value;
 
   struct address_t {
     uint64_t address;
@@ -312,30 +393,31 @@ namespace ylang {
       address = addr.address;
       return *this;
     }
+
+    constexpr auto operator<=>(const address_t&) const = default;
+    constexpr auto operator<=>(const uint64_t& addr) const {
+      return address <=> addr;
+    } 
+    constexpr auto operator<=>(const RegisterType& addr) const {
+      return address <=> addr;
+    }
+    constexpr auto operator<=>(const Value& value) const;
   };
 
-  bool operator<(const address_t& lhs, const address_t& rhs);
-  bool operator>(const address_t& lhs, const address_t& rhs);
-  bool operator==(const address_t& lhs, const address_t& rhs);
-  bool operator!=(const address_t& lhs, const address_t& rhs);
-  bool operator<=(const address_t& lhs, const address_t& rhs);
-  bool operator>=(const address_t& lhs, const address_t& rhs);
-
-  bool operator<(const address_t& lhs, const int64_t& rhs);
-  bool operator>(const address_t& lhs, const int64_t& rhs);
-  bool operator==(const address_t& lhs, const int64_t& rhs);
-  bool operator<(const address_t& lhs, const uint64_t& rhs);
-  bool operator>(const address_t& lhs, const uint64_t& rhs);
-  bool operator==(const address_t& lhs, const uint64_t& rhs);
-  bool operator<(const address_t& lhs, const float& rhs);
-  bool operator>(const address_t& lhs, const float& rhs);
-  bool operator==(const address_t& lhs, const float& rhs);
-  bool operator<(const address_t& lhs, const double& rhs);
-  bool operator>(const address_t& lhs, const double& rhs);
-  bool operator==(const address_t& lhs, const double& rhs);
-  bool operator<(const address_t& lhs, const RegisterType& rhs);
-  bool operator>(const address_t& lhs, const RegisterType& rhs);
-  bool operator==(const address_t& lhs, const RegisterType& rhs);
+  static constexpr uint64_t kFnvOffsetBasis = 0xBCF29CE484222325;
+  static constexpr uint64_t kFnvPrime = 0x100000001B3;
+  
+  static constexpr uint64_t FNV(std::string_view str) {
+    uint64_t hash = kFnvOffsetBasis;
+    for (auto& c : str) {
+      hash ^= c;
+      hash *= kFnvPrime;
+    }
+    hash ^= str.length();
+    hash *= kFnvPrime;
+  
+    return hash;
+  }
 
   address_t operator+(const address_t& lhs, const address_t& rhs);
   address_t operator-(const address_t& lhs, const address_t& rhs);

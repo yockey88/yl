@@ -38,4 +38,28 @@ class lexer_tests2 : public ::testing::Test {
     ylang::TokenList tokens;
 };
 
+class lexer_tests3 : public ::testing::Test {
+  protected:
+    std::string comment1 = "// this is a comment";
+    std::string comment2 = "// this is a comment\n";
+    std::string comment3 = "/* this is a comment */";
+
+    std::string comment4 = R"(
+      // this is a comment
+      // this is a comment
+    )";
+
+    std::string comment5 = R"(
+      /* this is a comment */
+      /* this is a comment */
+    )";
+
+    std::string comment6 = R"(
+      /* this is a comment
+      this is a comment */
+    )";
+
+    ylang::TokenList tokens;
+};
+
 #endif // !YL_LEXER_TESTS_HPP

@@ -14,21 +14,6 @@ namespace ylang {
   // static constexpr uint32_t kFnvOffsetBasisU32 = 0x811C9DC5;
   // static constexpr uint32_t kFnvPrimeU32 = 0x01000193;
 
-  static constexpr uint64_t kFnvOffsetBasis = 0xBCF29CE484222325;
-  static constexpr uint64_t kFnvPrime = 0x100000001B3;
-
-  static constexpr uint64_t FNV(std::string_view str) {
-    uint64_t hash = kFnvOffsetBasis;
-    for (auto& c : str) {
-      hash ^= c;
-      hash *= kFnvPrime;
-    }
-    hash ^= str.length();
-    hash *= kFnvPrime;
-
-    return hash;
-  }
-
   struct TokenList {
     std::vector<Token> tokens{};
     bool error = true;
@@ -70,6 +55,8 @@ namespace ylang {
 
       void HandleOperator();
       void HandleComment();
+
+      void HandleString(char delim);
 
       void AddToken(TokenType type);
 

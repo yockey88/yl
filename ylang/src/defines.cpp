@@ -1,93 +1,10 @@
 #include "defines.hpp"
 
 #include "errors.hpp"
+#include "value.hpp"
 
 namespace ylang {
 
-  bool operator<(const address_t& lhs, const address_t& rhs) {
-    return lhs.address < rhs.address;
-  }
-
-  bool operator>(const address_t& lhs, const address_t& rhs) {
-    return lhs.address > rhs.address;
-  }
-
-  bool operator==(const address_t& lhs, const address_t& rhs) {
-    return lhs.address == rhs.address;
-  }
-
-  bool operator!=(const address_t& lhs, const address_t& rhs) {
-    return lhs.address != rhs.address;
-  }
-
-  bool operator<=(const address_t& lhs, const address_t& rhs) {
-    return lhs.address <= rhs.address;
-  }
-
-  bool operator>=(const address_t& lhs, const address_t& rhs) {
-    return lhs.address >= rhs.address;
-  }
-  
-  bool operator<(const address_t& lhs, const int64_t& rhs) {
-    return lhs.address < rhs;
-  }
-
-  bool operator>(const address_t& lhs, const int64_t& rhs) {
-    return lhs.address > rhs;  
-  }
-
-  bool operator==(const address_t& lhs, const int64_t& rhs) {
-    return lhs.address == rhs;
-  }
-
-  bool operator<(const address_t& lhs, const uint64_t& rhs) {
-    return lhs.address < rhs;    
-  }
-
-  bool operator==(const address_t& lhs, const uint64_t& rhs) {
-    return lhs.address == rhs;
-  }
-  
-  bool operator>(const address_t& lhs, const uint64_t& rhs) {
-    return lhs.address > rhs;
-  }
-  
-  bool operator<(const address_t& lhs, const float& rhs) {
-    return lhs.address < rhs;
-  }
-  
-  bool operator==(const address_t& lhs, const float& rhs) {
-    return std::abs(lhs.address - rhs) < std::numeric_limits<float>::epsilon();
-  }
-
-  bool operator>(const address_t& lhs, const float& rhs) {
-    return lhs.address > rhs;
-  }
-
-  bool operator<(const address_t& lhs, const double& rhs) {
-    return lhs.address < rhs;
-  }
-
-  bool operator>(const address_t& lhs, const double& rhs) {
-    return lhs.address > rhs;
-  }
-
-  bool operator==(const address_t& lhs, const double& rhs) {
-    return std::abs(lhs.address - rhs) < std::numeric_limits<double>::epsilon();
-  }
-  
-  bool operator<(const address_t& lhs, const RegisterType& rhs) {
-    return lhs.address < static_cast<uint64_t>(rhs);
-  }
-
-  bool operator>(const address_t& lhs, const RegisterType& rhs) {
-    return lhs.address > static_cast<uint64_t>(rhs);
-  }
-
-  bool operator==(const address_t& lhs, const RegisterType& rhs) {
-    return lhs.address == static_cast<uint64_t>(rhs);
-  }
-  
   address_t operator+(const address_t& lhs, const address_t& rhs) {
     return address_t{lhs.address + rhs.address};
   }

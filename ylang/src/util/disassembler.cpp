@@ -13,8 +13,6 @@ namespace ylang {
   }
       
   void Disassembler::DisassembleInstruction(Instruction opcode , size_t offset) {
-    std::string inst = fmt::format(fmt::runtime("{:04x} |") , offset);
-
     switch (opcode.type) {
       case NOP: SimpleInstruction("NOP", offset); break;
 
@@ -32,10 +30,10 @@ namespace ylang {
       //   BinaryInstruction("LEA", offset, *opcode.lhs, *opcode.rhs); 
       // break;
 
-      case ADD: SimpleInstruction("ADD ", offset); break;
-      case SUB: SimpleInstruction("SUB ", offset); break;
-      case IMUL: SimpleInstruction("MUL ", offset); break;
-      case DIV: SimpleInstruction("DIV ", offset); break;
+      case ADD: BinaryInstruction("ADD ", offset , *opcode.lhs , *opcode.rhs); break;
+      case SUB: BinaryInstruction("SUB ", offset , *opcode.lhs , *opcode.rhs); break;
+      case IMUL: BinaryInstruction("MUL ", offset , *opcode.lhs , *opcode.rhs); break;
+      case DIV: BinaryInstruction("DIV ", offset , *opcode.lhs , *opcode.rhs); break;
 
       case MOV: BinaryInstruction("MOV ", offset, *opcode.lhs, *opcode.rhs); break;
 
@@ -70,7 +68,9 @@ namespace ylang {
   }
 
   void Disassembler::BinaryInstruction(const std::string& name, size_t offset, Operand lhs, Operand rhs) {
-    printinst("{:04x} | {}  {}  {}", offset, name, lhs, rhs);
+    std::string lhs_str = lhs.type == EMPTY ? "  " : fmtstr("{}" , lhs);
+    std::string rhs_str = rhs.type == EMPTY ? "  " : fmtstr("{}" , rhs);
+    printinst("{:04x} | {}  {}  {}", offset, name, lhs_str, rhs_str);
   }
 
 } // namespace ylang

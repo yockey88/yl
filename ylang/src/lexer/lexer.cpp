@@ -27,7 +27,14 @@ namespace ylang {
     keywords[FNV("f64")] = TokenType::F64;
     keywords[FNV("true")] = TokenType::TRUE;
     keywords[FNV("false")] = TokenType::FALSE;
+    keywords[FNV("nil")] = TokenType::NIL;
+    keywords[FNV("print")] = TokenType::PRINT;
+    keywords[FNV("if")] = TokenType::IF;
+    keywords[FNV("else")] = TokenType::ELSE;
+    keywords[FNV("while")] = TokenType::WHILE;
+    keywords[FNV("for")] = TokenType::FOR;
     keywords[FNV("return")] = TokenType::RETURN;
+    keywords[FNV("struct")] = TokenType::STRUCT;
   }
 
   TokenList Lexer::Lex() {
@@ -71,6 +78,9 @@ namespace ylang {
       } catch (LexerError& e) {
         printerr(ErrorType::LEXER , e.what());
         return tokens; 
+      } catch (InternalError& e) {
+        printerr(ErrorType::INTERNAL , e.what());
+        return tokens;
       }
     }
 
@@ -259,6 +269,12 @@ namespace ylang {
       case ')':
         AddToken(TokenType::CLOSE_PAREN);
       break;
+      case '[':
+        AddToken(TokenType::OPEN_BRACKET);
+      break;
+      case ']':
+        AddToken(TokenType::CLOSE_BRACKET);
+      break;
       case '+': 
         AddToken(TokenType::PLUS);
       break;
@@ -272,20 +288,67 @@ namespace ylang {
         AddToken(TokenType::STAR);
       break;
       case '/':
-        if (CheckNext('/') || CheckNext('*')) {
+        if (Check('/') || Check('*')) {
           HandleComment();
         } else {
           AddToken(TokenType::F_SLASH);
         }
       break;
       case '=':
-        AddToken(TokenType::EQUAL);
+        if (Check('=')) {
+          Advance();
+          AddToken(TokenType::EQUAL_EQUAL);
+        } else {
+          AddToken(TokenType::EQUAL);
+        }
+      break;
+      case '<':
+        if (Check('=')) {
+          Advance();
+          AddToken(TokenType::LESS_EQUAL);
+        } else {
+          AddToken(TokenType::LESS);
+        }
+      break;
+      case '!':
+        if (Check('=')) {
+          Advance();
+          AddToken(TokenType::BANG_EQUAL);
+        } else {
+          AddToken(TokenType::BANG);
+        }
+      break;
+      case '&':
+        if (Check('&')) {
+          Advance();
+          AddToken(TokenType::LOGICAL_AND);
+        } else {
+          throw Error("Unknown operator : '&'");
+        }
+      break;
+      case '|':
+        if (Check('|')) {
+          Advance();
+          AddToken(TokenType::LOGICAL_OR);
+        } else {
+          throw Error("Unknown operator : '|'");
+        }
       break;
       case ';':
         AddToken(TokenType::SEMICOLON);
       break;
       case ':':
         AddToken(TokenType::COLON);
+      break;
+      case ',':
+        AddToken(TokenType::COMMA);
+      break;
+      case '\'':
+      case '"':
+        HandleString(c);
+      break;
+      case '.':
+        AddToken(TokenType::DOT);
       break;
 
       default:
@@ -295,8 +358,6 @@ namespace ylang {
       
   void Lexer::HandleComment() {
     SourceLocation start = loc;
-
-    Consume();
 
     /// TODO: stream comments file/log
     if (Check('/')) {
@@ -320,6 +381,32 @@ namespace ylang {
     } else {
       throw LexerError(start, "Unknown comment type");
     }
+
+    DiscardToken();
+  }
+  
+  void Lexer::HandleString(char delim) {
+    DiscardToken(); // Discard opening quote
+    
+    uint64_t chars = 0;
+    while (!Check(delim) && !AtEnd()) {
+      if (Check('\n')) {
+        NewLine();
+      }
+      Advance();
+      ++chars;
+    }
+
+    if (AtEnd()) {
+      throw Error("Unterminated string");
+    }
+               
+    if (chars > 1) {
+      AddToken(TokenType::STRINGL);
+    } else {
+      AddToken(TokenType::CHARL);
+    }
+    Consume();
   }
      
   void Lexer::AddToken(TokenType type) {

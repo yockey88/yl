@@ -1,5 +1,7 @@
 #include "ast/ast.hpp"
 
+#include <stack>
+
 #include "util/io.hpp"
 
 namespace ylang {
@@ -16,7 +18,7 @@ namespace ylang {
       
   void Ast::PrintTree() {
     for (auto& node : nodes) {
-      printfmt(node->ToString());
+      print(node->ToString());
     } 
   }
 

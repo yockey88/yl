@@ -35,6 +35,24 @@ namespace ylang {
       Expr* initializer = nullptr;
   };
 
+  class ArrayDeclStmt : public Stmt {
+    public:
+      ArrayDeclStmt(const Token& name , Expr* initializer , Token size , 
+                    const Token& type = Token(SourceLocation{} , TokenType::UNKNOWN , "")) 
+        : Stmt(NodeType::ARRAY_DECL_STMT) , name(name) , type(type)  , 
+          size(size) , initializer(initializer) {}
+      virtual ~ArrayDeclStmt() { delete initializer; }
+
+      virtual std::string ToString() const override;
+      virtual void Accept(TreeWalker& walker) override;
+      virtual std::vector<Instruction> Emit() override;
+
+      Token name;
+      Token type;
+      Token size;
+      Expr* initializer = nullptr;
+  };
+
   class BlockStmt : public Stmt {
     public:
       BlockStmt(const std::vector<Stmt*>& stmts) 
@@ -50,6 +68,105 @@ namespace ylang {
       virtual std::vector<Instruction> Emit() override;
 
       std::vector<Stmt*> statements;
+  };
+
+  class PrintStmt : public Stmt {
+    public:
+      PrintStmt(Expr* expr) 
+        : Stmt(NodeType::PRINT_STMT) , expr(expr) {}
+      virtual ~PrintStmt() { delete expr; }
+
+      virtual std::string ToString() const override;
+      virtual void Accept(TreeWalker& walker) override;
+      virtual std::vector<Instruction> Emit() override;
+
+      Expr* expr;
+  };
+
+  class IfStmt : public Stmt {
+    public:
+      IfStmt(Expr* condition , Stmt* thenBranch , Stmt* elseBranch = nullptr) 
+        : Stmt(NodeType::IF_STMT) , condition(condition) , thenBranch(thenBranch) , elseBranch(elseBranch) {}
+      virtual ~IfStmt() {
+        delete condition;
+        delete thenBranch;
+        delete elseBranch;
+      }
+
+      virtual std::string ToString() const override;
+      virtual void Accept(TreeWalker& walker) override;
+      virtual std::vector<Instruction> Emit() override;
+
+      Expr* condition;
+      Stmt* thenBranch;
+      Stmt* elseBranch;
+  };
+
+  class WhileStmt : public Stmt {
+    public:
+      WhileStmt(Expr* condition , Stmt* body) 
+        : Stmt(NodeType::WHILE_STMT) , condition(condition) , body(body) {}
+      virtual ~WhileStmt() {
+        delete condition;
+        delete body;
+      }
+
+      virtual std::string ToString() const override;
+      virtual void Accept(TreeWalker& walker) override;
+      virtual std::vector<Instruction> Emit() override;
+
+      Expr* condition;
+      Stmt* body;
+  };
+
+  class ReturnStmt : public Stmt {
+    public:
+      ReturnStmt(Expr* expr = nullptr) 
+        : Stmt(NodeType::RETURN_STMT) , expr(expr) {}
+      virtual ~ReturnStmt() { delete expr; }
+
+      virtual std::string ToString() const override;
+      virtual void Accept(TreeWalker& walker) override;
+      virtual std::vector<Instruction> Emit() override;
+
+      Expr* expr = nullptr;
+  };
+
+  class FunctionStmt : public Stmt {
+    public:
+      FunctionStmt(const Token& name , const std::vector<Token>& params , 
+                   Stmt* body = nullptr) 
+        : Stmt(NodeType::FUNCTION_STMT) , name(name) , params(params) , body(body) {}
+      virtual ~FunctionStmt() {
+        delete body;
+      }
+
+      virtual std::string ToString() const override;
+      virtual void Accept(TreeWalker& walker) override;
+      virtual std::vector<Instruction> Emit() override;
+
+      Token name;
+      std::vector<Token> params;
+      Stmt* body;
+  
+  };
+
+  class StructStmt : public Stmt {
+    public:
+      StructStmt(const Token& name , const std::vector<Stmt*>& fields) 
+        : Stmt(NodeType::STRUCT_STMT) , name(name) , fields(fields) {}
+      virtual ~StructStmt() {
+        for (auto field : fields) {
+          delete field;
+        }
+      }
+
+      virtual std::string ToString() const override;
+      virtual void Accept(TreeWalker& walker) override;
+      virtual std::vector<Instruction> Emit() override;
+
+      Token name;
+      std::vector<Stmt*> fields;
   };
 
 } // namespace ylang

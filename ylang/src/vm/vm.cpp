@@ -21,6 +21,14 @@ namespace ylang {
 
   void VM::Load(Assembly* assembly) {
     chunks = assembly->chunks;
+
+#if 0
+    for (auto& chunk : chunks) {
+      for (auto& inst : chunk.instructions) {
+        printinstr(&inst);
+      }
+    }
+#endif
   }
 
   void VM::Run() {
@@ -32,7 +40,10 @@ namespace ylang {
 
       for (; instruction_index < current_chunk->instructions.size(); instruction_index++) {
         try {
-          this->instruction = &current_chunk->instructions[instruction_index];
+          instruction = &current_chunk->instructions[instruction_index];
+          if (instruction->lhs->type == IMMEDIATE) {
+            throw RuntimeError("Invalid immediate value in lhs of instruction");
+          }
 
           ExecuteInstruction();
         } catch (const RuntimeError& e) {
@@ -95,24 +106,8 @@ namespace ylang {
   }
 
   void VM::ExecBinaryOp(InstructionType type) {
-    if (type == MOV) {
-      if (instruction->lhs->type == OperandType::IMMEDIATE) {
-        throw RuntimeError("MOV into immediate operand not supported");
-      } else {
-        if (instruction->rhs->type == OperandType::IMMEDIATE) {
-          stack.push(instruction->rhs->val);
-        } else if (instruction->rhs->type == OperandType::REGISTER) {
-          RegisterType reg = instruction->rhs->val.As<RegisterType>();
-          stack.push(registers[reg]->Read());
-        } else {
-          throw RuntimeError("MOV into memory not supported");
-        }
-      }
-      ExecMOV(); 
-      return;
-    }
-
     switch (type) {
+      case MOV: ExecMOV(); break;
       case ADD: ExecADD(); break;
       case SUB: ExecSUB(); break;
       case IMUL: ExecIMUL(); break;
@@ -123,7 +118,6 @@ namespace ylang {
   }
 
   void VM::ExecPUSH() {
-    stack.push(instruction->lhs->val);
   }
 
   void VM::ExecPOP() {
@@ -131,9 +125,8 @@ namespace ylang {
   }
 
   void VM::ExecRET() {
-    Value val = stack.top();
-    stack.pop();
-    registers[RAX]->Write(val);
+    printfmt("RET {}" , registers[RAX]->Read());
+    // for now leave rax as the return value
   }
 
   void VM::ExecCALL() {
@@ -141,65 +134,23 @@ namespace ylang {
   }
 
   void VM::ExecNEG() {
-    Value val = stack.top();
-    stack.pop();
-
-    val.Negate();
-
-    stack.push(val);
   }
   
   void VM::ExecLEA() {}
 
   void VM::ExecADD() {
-    Value lval = stack.top();
-    stack.pop();
-
-    Value rval = stack.top();
-    stack.pop();
-
-    stack.push(lval + rval);
   }
 
   void VM::ExecSUB() {
-    Value lval = stack.top();
-    stack.pop();
-
-    Value rval = stack.top();
-    stack.pop();
-
-    stack.push(lval - rval);
   }
 
   void VM::ExecIMUL() {
-    Value lval = stack.top();
-    stack.pop();
-
-    Value rval = stack.top();
-    stack.pop();
-
-    stack.push(lval * rval);
   }
 
   void VM::ExecDIV() {
-    Value lval = stack.top();
-    stack.pop();
-
-    Value rval = stack.top();
-    stack.pop();
-
-    stack.push(lval / rval);
   }
 
   void VM::ExecMOV() {
-    if (instruction->lhs->type == OperandType::IMMEDIATE) {
-      throw RuntimeError("MOV into immediate not supported");
-    }
-
-    Value val = stack.top();
-    stack.pop();
-
-    Write(*instruction->lhs, val);
   }
 
   void VM::ExecAND() {
@@ -249,17 +200,6 @@ namespace ylang {
   }
 
   void VM::DumpMemory() {
-    // std::cout << "=== Memory ===" << std::endl;
-    // for (uint64_t i = 0; i < kMemorySize; i += sizeof(uint64_t)) {
-    //   printaddr(i);
-    // }
-  }
-
-  void VM::DumpRegisters() {
-    // std::cout << "=== Registers ===" << std::endl;
-    // for (uint8_t reg = 0; reg < kRegisterCount; reg++) {
-    //   fmt::print(fmt::runtime("{} = {}\n") , RegisterStrings[reg] , registers[reg]->Read());
-    // }
   }
 
 } // namespace ylang
