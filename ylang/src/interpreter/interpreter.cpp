@@ -273,6 +273,7 @@ namespace ylang {
     identifier_stack.pop();
 
     Value addr = env->Get(array).val;
+    printfmt("Array access : {}" , addr);
     if (addr.type != Value::Type::ARRAY && addr.type != Value::Type::STRING) {
       throw InterpreterError(fmtstr("Invalid array access on non-array variable {}" , array));
     }
@@ -345,17 +346,52 @@ namespace ylang {
       throw InterpreterError(fmtstr("Struct {} has no field {}" , struct_name , expr.member.value));
     }
 
+    Value index = Value();
+    if (expr.index != nullptr) {
+      expr.index->Accept(*this);
+      index = value_stack.top();
+      value_stack.pop();
+    }
+
+    if (index.type != Value::Type::NIL) {
+      if (!index.IsInt()) {
+        throw InterpreterError("Invalid array index");
+      } 
+
+      if (index.IsNegative()) {
+        throw InterpreterError("Array index cannot be negative");
+      }
+
+      if (index.AsUInt() < 0 || index.AsUInt() >= field->size) {
+        throw InterpreterError("Array index out of bounds");
+      }
+    }
+
     if (expr.assignment != nullptr) {
       expr.assignment->Accept(*this);
       Value value = value_stack.top();
       value_stack.pop();
 
+      if (index.type != Value::Type::NIL) {
+        address_t field_start = addr.AsAddress() + field->offset;
+        env->Ref(field_start + index.AsUInt())->val = value;
+        return;
+      }
+
       env->Ref(addr.AsAddress() + field->offset)->val = value;
       return;
     } else {
-      printfmt("Accessing field {} of struct {}" , expr.member.value , struct_name);
-      Value value = env->Ref(addr.AsAddress() + field->offset)->val;
-      value_stack.push(value);
+      
+      if (index.type != Value::Type::NIL) {
+        address_t field_start = addr.AsAddress() + field->offset;
+        Value val = env->Ref(field_start + index.AsUInt())->val;
+        value_stack.push(val);
+        return;
+      }
+
+      address_t field_start = addr.AsAddress() + field->offset;
+      Value val = env->Ref(field_start)->val;
+      value_stack.push(val);
     }
 
   }

@@ -131,8 +131,9 @@ namespace ylang {
 
   class ObjAccessExpr : public Expr {
     public:
-      ObjAccessExpr(Expr* obj, Token member , Expr* assignment = nullptr) 
-        : Expr(NodeType::OBJ_ACCESS_EXPR) , obj(obj), member(member) , assignment(assignment) {}
+      ObjAccessExpr(Expr* obj, Token member ,  Expr* index = nullptr , Expr* assignment = nullptr) 
+        : Expr(NodeType::OBJ_ACCESS_EXPR) , obj(obj), member(member) , assignment(assignment) ,
+          index(index) {}
       ~ObjAccessExpr() { delete obj; }
 
       std::string ToString() const override;
@@ -142,6 +143,7 @@ namespace ylang {
       Expr* obj;
       Token member;
       Expr* assignment;
+      Expr* index;
   };
 
 } // namespace ylang

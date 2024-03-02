@@ -6,14 +6,4 @@ struct Buffer {
   };
 };
 
-arr : u8[5] = {
-  1 , 2 , 3 , 4 , 5
-};
-
 buff : Buffer;
-
-print arr;
-
-print buff.data;
-
-DUMP;

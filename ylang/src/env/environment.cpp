@@ -151,9 +151,7 @@ namespace ylang {
 
     for (size_t i = 0; i < sym->fields.size(); ++i) {
       if (sym->fields[i].type == Value::Type::ARRAY) {
-        for (size_t j = 0; j < sym->fields[i].initial_values.size(); ++j) {
-          Alloc(sym->fields[i].initial_values[j] , fmtstr("{}::{}[{}]" , name , sym->fields[i].name , j));
-        }
+        Alloc(sym->fields[i].initial_values.data() , sym->fields[i].initial_values.size() , fmtstr("{}::{}" , name , sym->fields[i].name));
       } else {
         Alloc(sym->fields[i].initial_values[0] , fmtstr("{}::{}" , name , sym->fields[i].name));
       }

@@ -22,7 +22,7 @@ namespace ylang {
         Stmt* stmt = ParseDeclaration();
         if (stmt != nullptr) {
           ast.nodes.push_back(stmt);
-       } else {
+        } else {
           Sync();
          return ast;
         }
@@ -54,6 +54,8 @@ namespace ylang {
           continue;
         } else if (type == TokenType::SEMICOLON) {
           continue;
+        } else if (type == TokenType::END) {
+          return ast;
         }
       }
     }
@@ -74,7 +76,10 @@ namespace ylang {
         return ParseBlock();
       }
       if (Match({ TokenType::PRINT })) {
-        return ParsePrint();
+        printfmt("Parsing print statement");
+        Stmt* print = ParsePrint();
+        printfmt("Parsed print statement: {}", print->ToString());
+        return print;
       }
       if (Match({ TokenType::IF })) {
         return ParseIf();
@@ -100,10 +105,6 @@ namespace ylang {
       printerr(ErrorType::INTERNAL , "Internal error");
       printerr(ErrorType::INTERNAL , e.what());
       Sync();
-    } catch (const std::exception& e) {
-      printerr(ErrorType::INTERNAL , "UNDEFINED error");
-      printerr(ErrorType::INTERNAL , e.what());
-      Sync(); 
     } catch (TokenType type) { 
       std::vector<Stmt*> stmts;
       Stmt* stmt = RecoverFrom(type , stmts);
@@ -121,12 +122,20 @@ namespace ylang {
         return ParseBlock();
       } else if (type == TokenType::SEMICOLON) {
         return ParseDeclaration();
+      } else if (type == TokenType::END) {
+        throw TokenType::END;
       }
+
+      throw Error("UNDEFINED error");
+    } catch (const std::exception& e) {
+      printerr(ErrorType::INTERNAL , "UNDEFINED error");
+      printerr(ErrorType::INTERNAL , e.what());
+      Sync(); 
 
       throw Error("UNDEFINED error");
     }
 
-    throw Error("UNDFEINED error");
+    throw Error("UNREACHABLE CODE");
   }
 
   Stmt* Parser::ResolveDeclaration() {
@@ -378,6 +387,8 @@ namespace ylang {
           stmts.push_back(stmt);
         } else if (type == TokenType::SEMICOLON) {
           stmts.push_back(stmt);
+        } else if (type == TokenType::END) {
+          throw TokenType::END;
         }
 
         return new BlockStmt(stmts);
@@ -665,6 +676,12 @@ namespace ylang {
         return ParseArrayAccess(id);
       }
 
+
+      if (Match({ TokenType::DOT })) {
+        printfmt("Matched {} | Current {} = {}" , id->ToString() , TokenTypeStrings[Peek().type] , Peek().value);
+        return ParseStructAccess(id);
+      }
+
       return new VarExpr(Previous());
     }
 
@@ -711,34 +728,26 @@ namespace ylang {
   Expr* Parser::ParseStructAccess(Expr* expr) {
     Token name = Consume(TokenType::IDENTIFIER , "Expected identifier for struct access");
 
-    printfmt("Struct Access : {}" , name.value);
+    Expr* assignment = nullptr;
+    Expr* index = nullptr;
+    
     if (Match({ TokenType::EQUAL })) {
-      Expr* assignment = ParseExpression();
+      assignment = ParseExpression();
       Consume(TokenType::SEMICOLON , "Expected semicolon after assignment expression");
-
-      return new ObjAccessExpr(expr , name , assignment);
     }
 
-    if (Match({ TokenType::OPEN_BRACKET } , false)) {
-      Expr* arr_access = ParseArrayAccess(new VarExpr(name));
+    if (Match({ TokenType::OPEN_BRACKET })) {
+      index = ParseExpression();
+      Consume(TokenType::CLOSE_BRACKET , "Expected closing bracket for struct array access");
 
-      printfmt("Array Access : {}" , arr_access->ToString());
-
+      assignment = nullptr;
       if (Match({ TokenType::EQUAL })) {
-        Expr* assignment = ParseExpression();
+        assignment = ParseExpression();
         Consume(TokenType::SEMICOLON , "Expected semicolon after assignment expression");
-
-        printfmt("Assignment : {}" , assignment->ToString());
-        throw Error("Array assignment not implemented yet");
-
-        // return new ObjAccessExpr(expr , name , arr_access , assignment);
       }
-
-      return new ObjAccessExpr(expr , name , arr_access);
     }
 
-    Consume(TokenType::SEMICOLON , "Expected semicolon after struct access expression");
-    return new ObjAccessExpr(expr , name);
+    return new ObjAccessExpr(expr , name , index , assignment);
   }
 
   Token Parser::Peek() const {
@@ -855,11 +864,10 @@ namespace ylang {
   
   void Parser::Sync() {
     printerr(ErrorType::PARSER , fmtstr("Syncing parser, discarding {} = {}" , TokenTypeStrings[Peek().type] , Peek().value));
-    Advance();
 
     while (!AtEnd()) {
       /// open brace is peek not previoud because we can parse a new block
-      if (Peek().type == TokenType::OPEN_BRACE) {
+      if (Peek().type == TokenType::OPEN_BRACE || Peek().type == TokenType::END) {
         printerr(ErrorType::PARSER , "Syncing parser, found open brace");
         throw Peek().type;
       }
@@ -886,6 +894,8 @@ namespace ylang {
       case TokenType::OPEN_BRACE: {
         return ParseBlock();
       } break;
+      case TokenType::END:
+        throw TokenType::END;
       default:
         throw Error(fmtstr("Unexpected token found {} = {}. Failed to recover" , TokenTypeStrings[Peek().type] , Peek().value));
     } 

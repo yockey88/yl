@@ -175,9 +175,11 @@ namespace ylang {
   std::string ObjAccessExpr::ToString() const {
     constexpr std::string_view fmt = "({}.{})";
     constexpr std::string_view fmtassign = "({}.{} = {})";
+
     if (assignment != nullptr) {
       return fmtstr(fmtassign , obj->ToString() , member.value , assignment->ToString());
     }
+
     return fmtstr(fmt , obj->ToString() , member.value);
   } 
 
