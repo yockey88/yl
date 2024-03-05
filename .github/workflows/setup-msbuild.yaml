@@ -1,0 +1,28 @@
+name: "setup-msbuild"
+description: "Adds msbuild to PATH"
+author: "Microsoft" # comes from microsoft/set-msbuild repo on GitHub
+branding:
+  color: purple
+  icon: terminal
+inputs:
+  vswhere-path:
+    required: false
+    description: "Path to vswhere.exe"
+  vs-version:
+    required: false
+    description: "Version of Visual Studio to install"
+  vs-prerelease:
+    required: false
+    description: "Install prerelease version of Visual Studio"
+  msbuild-architecture:
+    description: 'The preferred processor architecture of MSBuild. Can be either "x86", "x64", or "arm64". "x64" is only available from Visual Studio version 17.0 and later.'
+    required: false
+    default: "x64"
+outputs:
+  msbuild-path:
+    description: "Path to MSBuild"
+
+runs:
+  using: "node20"
+  main: "tools/index.js"
+

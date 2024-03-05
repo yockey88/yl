@@ -1,29 +1,28 @@
-name: Create Project
+name: Build Project
 
-on: create 
+on: pull-request 
 
 
 jobs:
-  configure-project: 
-    if: github.event.ref == github.event.master_branch
+  build-project: 
     permissions:
       contents: write
-      pull-requests: write
     runs-on: "windows-latest"
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+
+      - name: msbuild:
+        id: setup_msbuild_explicit
+        uses: ./
         with:
-          python-version: '3.x'
-      - run: python3 ./.github/workflows/config-premake.py ${{ github.event.repository.name }}
-        # steps:
-      - uses: peter-evans/create-pull-request@v3
-        with:
-          commit-message: "Premake configuration with repo_name as ${{ github.event.repository.name }}"
-          title: Premake Config 
-          body: | # Premake config PR
-            Premake file configuration with repo_name as ${{ github.event.repository.name }}
-          branch: premake-config
-        #create-pull-request:
-        #  needs: configure-project
-        #  runs-on: "windows-latest"
+          vswhere-path: "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+
+      - name: setup msbuild
+        id: setup_msbuild
+        uses: ./
+
+      - name: Generate solution
+        uses: generate-solution@v1
+      
+      - name: Build app for release
+        run: msbuild ylang.sln -t:rebuild -verbosity:diag -property:Configuration=Release
