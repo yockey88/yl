@@ -1,12 +1,9 @@
 name: Build Project
 
-on: pull-request 
-
+on: push 
 
 jobs:
   build-project: 
-    permissions:
-      contents: write
     runs-on: "windows-latest"
     steps:
       - uses: actions/checkout@v4
