@@ -1,6 +1,13 @@
 name: Build Project
 
-on: push 
+on: 
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master 
+      - dev
 
 jobs:
   build-project: 
@@ -10,6 +17,3 @@ jobs:
 
       - name: Generate solution
         uses: generate-solution@v1
-      
-      - name: Build app for release
-        run: msbuild ylang.sln -t:rebuild -verbosity:diag -property:Configuration=Release
