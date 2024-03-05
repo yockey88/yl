@@ -8,16 +8,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: msbuild:
-        id: setup_msbuild_explicit
-        uses: ./
-        with:
-          vswhere-path: "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
-
-      - name: setup msbuild
-        id: setup_msbuild
-        uses: ./
-
       - name: Generate solution
         uses: generate-solution@v1
       
