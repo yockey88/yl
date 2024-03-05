@@ -34,28 +34,28 @@ namespace ylang {
       virtual ~TreeWalker() = default;
 
       // Expressions
-      virtual void Visit(LiteralExpr& expr) = 0;
-      virtual void Visit(UnaryExpr& expr) = 0;
-      virtual void Visit(BinaryExpr& expr) = 0;
-      virtual void Visit(CallExpr& expr) = 0;
-      virtual void Visit(GroupingExpr& stmt) = 0;
-      virtual void Visit(VarExpr& stmt) = 0;
-      virtual void Visit(AssignExpr& stmt) = 0;
-      virtual void Visit(ArrayExpr& stmt) = 0;
-      virtual void Visit(ArrayAccessExpr& stmt) = 0;
-      virtual void Visit(ObjAccessExpr& stmt) = 0;
+      virtual void Visit(LiteralExpr& expr) {}
+      virtual void Visit(UnaryExpr& expr) {}
+      virtual void Visit(BinaryExpr& expr) {}
+      virtual void Visit(CallExpr& expr) {}
+      virtual void Visit(GroupingExpr& expr) {}
+      virtual void Visit(VarExpr& expr) {}
+      virtual void Visit(AssignExpr& expr) {}
+      virtual void Visit(ArrayExpr& expr) {}
+      virtual void Visit(ArrayAccessExpr& expr) {}
+      virtual void Visit(ObjAccessExpr& expr) {}
 
       // Statements
-      virtual void Visit(ExprStmt& stmt) = 0;
-      virtual void Visit(VarDeclStmt& stmt) = 0;
-      virtual void Visit(ArrayDeclStmt& stmt) = 0;
-      virtual void Visit(BlockStmt& stmt) = 0;
-      virtual void Visit(PrintStmt& stmt) = 0;
-      virtual void Visit(IfStmt& stmt) = 0;
-      virtual void Visit(WhileStmt& stmt) = 0;
-      virtual void Visit(ReturnStmt& stmt) = 0;
-      virtual void Visit(FunctionStmt& stmt) = 0;
-      virtual void Visit(StructStmt& stmt) = 0;
+      virtual void Visit(ExprStmt& stmt) {}
+      virtual void Visit(VarDeclStmt& stmt) {}
+      virtual void Visit(ArrayDeclStmt& stmt) {}
+      virtual void Visit(BlockStmt& stmt) {}
+      virtual void Visit(PrintStmt& stmt) {}
+      virtual void Visit(IfStmt& stmt) {}
+      virtual void Visit(WhileStmt& stmt) {}
+      virtual void Visit(ReturnStmt& stmt) {}
+      virtual void Visit(FunctionStmt& stmt) {}
+      virtual void Visit(StructStmt& stmt) {}
   };
 
 } // namespace ylang

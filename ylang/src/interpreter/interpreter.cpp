@@ -570,9 +570,9 @@ namespace ylang {
       }
 
       if (value.AsBool()) {
-        stmt.thenBranch->Accept(*this);
-      } else if (stmt.elseBranch != nullptr) {
-        stmt.elseBranch->Accept(*this);
+        stmt.then_branch->Accept(*this);
+      } else if (stmt.else_branch != nullptr) {
+        stmt.else_branch->Accept(*this);
       }
     } else {
       throw InternalError("No value on stack while evaluating if condition");

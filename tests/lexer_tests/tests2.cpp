@@ -5,7 +5,7 @@
 #include "lexer/lexer.hpp"
 
 TEST_F(lexer_tests2 , simple_multiplication) {
-  std::cout << "[ Content ] : " << content1 << std::endl;
+  std::cout << "[ Content ] : " << content1.src << std::endl;
   ylang::Lexer lexer(content1);
   tokens = lexer.Lex();
 

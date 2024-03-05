@@ -17,8 +17,6 @@
 
 #define YL_UNUSED(x) (void)x
 
-#define U64(c) static_cast<uint64_t>(c)
-
 namespace ylang {
 
   typedef uint8_t byte;
@@ -28,6 +26,37 @@ namespace ylang {
 
   constexpr std::string_view kVersion = "0.1.0";
   constexpr std::string_view kSingleFormat = "{}";
+
+namespace flags {
+
+constexpr static uint64_t HELP = 1;
+constexpr static uint64_t VERSION = 1 << 1;
+constexpr static uint64_t DEBUG = 1 << 2;
+constexpr static uint64_t VERBOSE = 1 << 3;
+constexpr static uint64_t PREPROCESS = 1 << 4;
+constexpr static uint64_t LEX = 1 << 5;
+constexpr static uint64_t PARSE = 1 << 6;
+// 7?
+constexpr static uint64_t OUTPUT = 1 << 8;
+constexpr static uint64_t INCLUDE = 1 << 9;
+
+constexpr static uint64_t CREATE_PROJECT = 1 << 10;
+constexpr static uint64_t DIRECTORY = 1 << 11;
+constexpr static uint64_t PROJECT_NAME = 1 << 12;
+
+constexpr static uint64_t BUILD = 1 << 13;
+constexpr static uint64_t RUN = 1 << 14;
+
+constexpr static uint64_t HELP_MORE = 1 << 15;
+
+constexpr static uint64_t FORCE = 1 << 16;
+
+} // namespace flags
+  
+  enum ExitCode {
+    OK = 0,
+    ERROR = 1
+  };
   
   enum TokenType {
     START,
@@ -145,12 +174,26 @@ namespace ylang {
   };
   
   enum ErrorType { 
+    PREPROCESSOR,
     LEXER, 
     PARSER, 
+    STATIC_ANALYSIS,
     COMPILER, 
     RUNTIME, 
     INTERPRETER,
     INTERNAL,
+
+    INVALID_ARGS,
+    FILE_IO ,
+    INVALID_DIRECTIVE,
+    MISSING_SEMICOLON,
+    BUILD,
+    RECURSIVE_INCLUDE,
+    CIRCULAR_DEPENDENCY,
+
+    TYPE_MISMATCH,
+    TYPE_DEDUCTION_FAILED,
+    UNDECLARED_IDENTIFIER,
   
     NUM_ERROR_TYPES
   };
@@ -302,12 +345,26 @@ namespace ylang {
   
   constexpr uint32_t kErrorTypeCount = ErrorType::NUM_ERROR_TYPES + 1;
   constexpr std::array<std::string_view, kErrorTypeCount> ErrorTypeStrings = {
+    "PREPROCESSOR",
     "LEXER",
     "PARSER",
+    "STATIC_ANALYSIS",
     "COMPILER",
     "RUNTIME",
     "INTERPRETER",
     "INTERNAL",
+
+    "INVALID_ARGS",
+    "FILE_IO",
+    "INVALID_DIRECTIVE",
+    "MISSING_SEMICOLON",
+    "BUILD",
+    "RECURSIVE_INCLUDE",
+    "CIRCULAR_DEPENDENCY",
+
+    "TYPE_MISMATCH",
+    "TYPE_DEDUCTION_FAILED",
+    "UNDECLARED_IDENTIFIER",
   
     "INVALID_ERROR_TYPE",
   };
@@ -402,7 +459,7 @@ namespace ylang {
       return address <=> addr;
     }
     constexpr auto operator<=>(const Value& value) const;
-  };
+  }; 
 
   static constexpr uint64_t kFnvOffsetBasis = 0xBCF29CE484222325;
   static constexpr uint64_t kFnvPrime = 0x100000001B3;

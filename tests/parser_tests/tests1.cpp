@@ -8,11 +8,11 @@
 #include "ast/ast_stmt.hpp"
 
 TEST_F(parser_tests1 , literal_expr1) {
-  std::cout << "[ Content ] : " << content1 << std::endl;
+  std::cout << "[ Content ] : " << content1.src << std::endl;
   ylang::Lexer lexer(content1);
   auto tokens = lexer.Lex();
 
-  ylang::Parser parser(tokens.tokens);
+  ylang::Parser parser(tokens);
   auto ast = parser.Parse();
 
   ASSERT_EQ(ast.Nodes().size() , 1);
@@ -40,11 +40,11 @@ TEST_F(parser_tests1 , literal_expr1) {
 }
 
 TEST_F(parser_tests1 , binary_expr1) {
-  std::cout << "[ Content ] : " << content2 << std::endl;
+  std::cout << "[ Content ] : " << content2.src << std::endl;
   ylang::Lexer lexer(content2);
   auto tokens = lexer.Lex();
 
-  ylang::Parser parser(tokens.tokens);
+  ylang::Parser parser(tokens);
   auto ast = parser.Parse();
 
   // ASSERT_NE(ast.result , nullptr);
@@ -78,11 +78,11 @@ TEST_F(parser_tests1 , binary_expr1) {
 }
 
 TEST_F(parser_tests1 , binary_expr2) {
-  std::cout << "[ Content ] : " << content3 << std::endl;
+  std::cout << "[ Content ] : " << content3.src << std::endl;
   ylang::Lexer lexer(content3);
   auto tokens = lexer.Lex();
 
-  ylang::Parser parser(tokens.tokens);
+  ylang::Parser parser(tokens);
   auto ast = parser.Parse();
 
   // ASSERT_NE(ast.result , nullptr);
@@ -116,11 +116,11 @@ TEST_F(parser_tests1 , binary_expr2) {
 }
 
 TEST_F(parser_tests1 , binary_expr3) {
-  std::cout << "[ Content ] : " << content4 << std::endl;
+  std::cout << "[ Content ] : " << content4.src << std::endl;
   ylang::Lexer lexer(content4);
   auto tokens = lexer.Lex();
 
-  ylang::Parser parser(tokens.tokens);
+  ylang::Parser parser(tokens);
   auto ast = parser.Parse();
 
   // ASSERT_NE(ast.result , nullptr);

@@ -8,14 +8,14 @@
 #include "defines.hpp"
 #include "token.hpp"
 #include "errors.hpp"
+#include "preprocessor/preprocessor.hpp"
 
 namespace ylang {
 
-  // static constexpr uint32_t kFnvOffsetBasisU32 = 0x811C9DC5;
-  // static constexpr uint32_t kFnvPrimeU32 = 0x01000193;
-
   struct TokenList {
+    std::string src_name;
     std::vector<Token> tokens{};
+    std::vector<std::string> dependency_names{};  
     bool error = true;
 
     bool valid() const { return !error; }
@@ -24,7 +24,7 @@ namespace ylang {
 
   class Lexer {
     public:
-      Lexer(const std::string& src);
+      Lexer(const ProcessedFile& src);
       ~Lexer() {}
 
       TokenList Lex();
@@ -34,6 +34,7 @@ namespace ylang {
 
       TokenList tokens;
 
+      const std::string src_name;
       const std::string src;
       std::string current_token;
 
