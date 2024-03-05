@@ -10,8 +10,10 @@ namespace ylang {
 
   std::unordered_map<uint64_t, TokenType> Lexer::keywords{};
 
-  Lexer::Lexer(const std::string& src) 
-      : src(src) {
+  Lexer::Lexer(const ProcessedFile& src) 
+      : src_name(src.name) , src(src.src) {
+    tokens.dependency_names = src.imports;
+
     keywords[FNV("bool")] = TokenType::BOOL;
     keywords[FNV("char")] = TokenType::CHAR;
     keywords[FNV("string")] = TokenType::STRING;
@@ -42,6 +44,8 @@ namespace ylang {
       tokens.error = false;
       return tokens;
     }
+
+    tokens.src_name = src_name;
 
     tokens.tokens.push_back(Token(loc , TokenType::START , ""));
 
