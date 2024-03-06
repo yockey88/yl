@@ -1,9 +1,0 @@
-name: "generate-solution"
-description: "Generates a solution file for a project"
-branding:
-  color: purple
-  icon: terminal
-
-runs:
-  using: "python"
-  main: "tools/gensln.py"
