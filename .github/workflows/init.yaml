@@ -20,6 +20,29 @@ jobs:
       - name: Build project (Release configuration)
         run: msbuild ylang.sln /p:Configuration=Release
 
+  run-tests:
+    runs-on: "windows-latest"
+    needs: build-project
+    steps:
+      - name: Run Lexer tests (Debug configuration) 
+        run: ./bin/Debug/lexer_tests/lexer_tests.exe
+
+      - name: Run Parser Tests (Debug configuration)
+        run: ./bin/Debug/parser_tests/parser_tests.exe
+
+      - name: Run Value tests (Debug configuration)
+        run: ./bin/Debug/value_tests/value_tests.exe
+
+      - name: Run Lexer tests (Release configuration)
+        run: ./bin/Release/lexer_tests/lexer_tests.exe
+
+      - name: Run Parser Tests (Release configuration)
+        run: ./bin/Release/parser_tests/parser_tests.exe
+
+      - name: Run Value tests (Release configuration)
+        run: ./bin/Release/value_tests/value_tests.exe
+
+
 
 
 
