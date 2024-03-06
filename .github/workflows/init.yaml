@@ -6,6 +6,8 @@ jobs:
   build-project: 
     runs-on: "windows-latest"
     steps:
+      - uses: actions/checkout@v4
+        
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -14,7 +16,6 @@ jobs:
       - name: Generate .sln
         run: python3 cli.py gensln
 
-          ## - uses: actions/checkout@v4
 
         ##- name: setup-msbuild
         ##  uses: microsoft/setup-msbuild@v2
