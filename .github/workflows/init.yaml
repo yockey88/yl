@@ -20,10 +20,6 @@ jobs:
       - name: Build project (Release configuration)
         run: msbuild ylang.sln /p:Configuration=Release
 
-  run-tests:
-    runs-on: "windows-latest"
-    needs: build-project
-    steps:
       - name: Run Lexer tests (Debug configuration) 
         run: ./bin/Debug/lexer_tests/lexer_tests.exe
 
