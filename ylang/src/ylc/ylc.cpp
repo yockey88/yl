@@ -211,6 +211,20 @@ constexpr std::string_view detailed_help =
     if (arguments.TestFlag(flags::DEBUG) || arguments.TestFlag(flags::VERBOSE)) {
       print("============== VERBOSE >");
     }
+
+    if (arguments.TestFlag(flags::HELP)) {
+      return Config{ Mode::HELP, "", std::nullopt, std::nullopt };
+    }
+
+    if (arguments.TestFlag(flags::HELP_MORE)) {
+      auto args = arguments.GetArgs(flags::HELP_MORE);
+      if (args.size() != 1) {
+        printerr(ErrorType::INVALID_ARGS, "No argument provided for --help-more");
+        return Config{ Mode::ERR, "", std::nullopt, std::nullopt };
+      }
+
+      return Config{ Mode::HELP_MORE, args[0], std::nullopt, std::nullopt };
+    }
   
     if (arguments.TestFlag(flags::CREATE_PROJECT)) {
       Config config;
