@@ -39,6 +39,8 @@ namespace ylang {
       size_t current = 0;
 
       std::vector<Token> declared_types;
+      std::vector<Token> declared_vars;
+      std::vector<Token> declared_funcs;
 
       Stmt* ParseDeclaration();
       Stmt* ResolveDeclaration();

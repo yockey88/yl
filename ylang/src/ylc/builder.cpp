@@ -109,13 +109,21 @@ namespace ylang {
     begin = std::chrono::steady_clock::now();
     Parse();
 
-    for (auto& ast : ir.asts) {
-      if (ast.IsValid()) {
-        ast.PrintTree();
+    if (verbose) {
+      print(" -- ASTs");
+      for (auto& ast : ir.asts) {
+        if (ast.IsValid()) {
+          ast.PrintTree();
+        }
       }
     }
 
     Resolve();
+
+    if (failure) {
+      printerr(ErrorType::STATIC_ANALYSIS, "Failed to resolve symbols");
+      return IntermediateRepresentation();
+    }
 
     end = std::chrono::steady_clock::now();
     elapsed = end - begin;
