@@ -15,7 +15,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Build project
-        run: msbuild /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild ylang.sln /p:Configuration=Release /p:Platform="Any CPU"
 
 
 
