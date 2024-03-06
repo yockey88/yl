@@ -11,11 +11,12 @@ jobs:
       - name: Generate .sln
         run: python3 cli.py gensln
 
+      - name: setup-msbuild
+        uses: microsoft/setup-msbuild@v2
+
       - name: Build project
         run: msbuild /p:Configuration=Release /p:Platform="Any CPU"
 
 
-        ##- name: setup-msbuild
-        ##  uses: microsoft/setup-msbuild@v2
 
 
