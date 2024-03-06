@@ -84,6 +84,22 @@ namespace ylang {
   Stmt* Parser::ResolveDeclaration() {
     Token name = Consume(TokenType::IDENTIFIER , "Expected identifier");
 
+    if (std::find_if(declared_vars.begin() , declared_vars.end() , [](const Token& name){
+      return name.value == name.value;
+    }) != declared_vars.end()) {
+      Expr* assignment = ParseAssignment();
+      Consume(TokenType::SEMICOLON , "Expected semicolon after assignment");
+      return new ExprStmt(assignment);
+    }
+
+    if (std::find_if(declared_funcs.begin() , declared_funcs.end() , [](const Token& name){
+      return name.value == name.value;
+    }) != declared_funcs.end()) {
+      if (Match({ TokenType::OPEN_PAREN })) {
+        return ParseCallable(FUNCTION , name);
+      }
+    }
+
     if (Match({ TokenType::SEMICOLON })) {
       return new VarDeclStmt(name , nullptr);
     }
@@ -190,6 +206,7 @@ namespace ylang {
       // do nothing
     }
 
+    declared_funcs.push_back(name);
     return new FunctionStmt(name , params , ret_type , body);
   }
 

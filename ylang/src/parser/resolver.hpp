@@ -65,6 +65,8 @@ namespace ylang {
       void Declare(const Token& name);
       void Define(const Token& name);
 
+      void DumpScopes();
+
       StaticAnalysisError Error(const Token& token , const std::string& message , ErrorType type = ErrorType::STATIC_ANALYSIS);
   };
 

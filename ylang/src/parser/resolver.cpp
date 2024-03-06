@@ -44,6 +44,7 @@ namespace ylang {
   }
 
   void DeclarationResolver::Visit(AssignExpr& stmt) {
+    printfmt("Resolving assign expr : {}", stmt.name.value);
     Resolve(stmt.value);
     ResolveLocal(stmt , stmt.name);
   }
@@ -69,7 +70,6 @@ namespace ylang {
   }
   
   void DeclarationResolver::Visit(VarDeclStmt& stmt) {
-    print("Visiting var decl stmt");
     Declare(stmt.name);
 
     if (stmt.initializer != nullptr) {
@@ -77,6 +77,8 @@ namespace ylang {
     }
 
     Define(stmt.name);
+
+    DumpScopes();
   }
 
   void DeclarationResolver::Visit(ArrayDeclStmt& stmt) {
@@ -137,12 +139,10 @@ namespace ylang {
   }
 
   void DeclarationResolver::BeginScope() {
-    scopes[current_scope] = std::unordered_map<std::string , bool>();
     current_scope++;
   }
 
   void DeclarationResolver::EndScope() {
-    scopes[current_scope].clear();
     current_scope--;
   }
 
@@ -161,11 +161,17 @@ namespace ylang {
   }
 
   void DeclarationResolver::ResolveLocal(Expr& expr , const Token& name) {
-    for (int i = current_scope - 1; i >= 0; i--) {
-      if (scopes[i].find(name.value) != scopes[i].end()) {
-        return;
+    for (int i = current_scope; i >= 0; i--) {
+      for (auto& [key , defined] : scopes[i]) {
+        if (key == name.value && !defined) {
+          throw Error(name , fmtstr("Cannot read local variable in its own initializer"));
+        } else {
+          return;
+        }
       }
     }
+
+    throw Error(name , fmtstr("Variable {} not declared in this scope" , name.value));
   }
 
   void DeclarationResolver::ResolveFunction(FunctionStmt& name) {
@@ -190,7 +196,6 @@ namespace ylang {
   }
 
   void DeclarationResolver::Define(const Token& name) {
-    print("Defining variable");
     if (scopes.empty()) {
       return;
     }
@@ -199,6 +204,15 @@ namespace ylang {
       throw Error(name , fmtstr("Defining undeclared variable {} in this scope" , name.value));
     }
     scopes[current_scope][name.value] = true;
+  }
+
+  void DeclarationResolver::DumpScopes() {
+    for (uint32_t i = 0; i <= current_scope; i++) {
+      printfmt("Scope {}" , i);
+      for (auto& [name , defined] : scopes[i]) {
+        printfmt("Name : {} , Defined : {}", name , defined);
+      }
+    }
   }
 
   StaticAnalysisError DeclarationResolver::Error(const Token& token, const std::string& message, ErrorType type) {
