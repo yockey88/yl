@@ -1,9 +1,11 @@
 name: Build Project
 
-on: push 
+on: 
+  pull_request:
+    branches: [ dev ]
 
 jobs:
-  build-project: 
+  build-and-test: 
     runs-on: "windows-latest"
     steps:
       - uses: actions/checkout@v4
@@ -14,32 +16,14 @@ jobs:
       - name: setup-msbuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build project (Debug configuration)
-        run: msbuild ylang.sln /p:Configuration=Debug 
-
-      - name: Build project (Release configuration)
+      - name: Build project
         run: msbuild ylang.sln /p:Configuration=Release
 
-      - name: Run Lexer tests (Debug configuration) 
-        run: ./bin/Debug/lexer_tests/lexer_tests.exe
-
-      - name: Run Parser Tests (Debug configuration)
-        run: ./bin/Debug/parser_tests/parser_tests.exe
-
-      - name: Run Value tests (Debug configuration)
-        run: ./bin/Debug/value_tests/value_tests.exe
-
-      - name: Run Lexer tests (Release configuration)
+      - name: Run Lexer tests
         run: ./bin/Release/lexer_tests/lexer_tests.exe
 
-      - name: Run Parser Tests (Release configuration)
+      - name: Run Parser tests
         run: ./bin/Release/parser_tests/parser_tests.exe
 
-      - name: Run Value tests (Release configuration)
+      - name: Run Value tests
         run: ./bin/Release/value_tests/value_tests.exe
-
-
-
-
-
-
