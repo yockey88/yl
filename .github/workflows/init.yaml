@@ -2,7 +2,13 @@ name: Build Project
 
 on: 
   pull_request:
-    branches: [ dev ]
+    branches: 
+      - dev
+      - master
+  push:
+    branches:
+      - feature/*
+      - env/*
 
 jobs:
   build-and-test: 
