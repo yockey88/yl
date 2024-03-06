@@ -132,6 +132,10 @@ namespace ylang {
       }
     } 
 
+    if (Check('.')) {
+      throw Error("Invalid float literal");
+    }
+
     if (Check('e') || Check('E')) {
       HandleScientific();
       return;

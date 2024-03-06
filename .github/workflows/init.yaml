@@ -1,29 +1,35 @@
-name: Create Project
+name: Build Project
 
-on: create 
-
+on: 
+  pull_request:
+    branches: 
+      - dev
+      - master
+  push:
+    branches:
+      - feature/*
+      - env/*
 
 jobs:
-  configure-project: 
-    if: github.event.ref == github.event.master_branch
-    permissions:
-      contents: write
-      pull-requests: write
+  build-and-test: 
     runs-on: "windows-latest"
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-      - run: python3 ./.github/workflows/config-premake.py ${{ github.event.repository.name }}
-        # steps:
-      - uses: peter-evans/create-pull-request@v3
-        with:
-          commit-message: "Premake configuration with repo_name as ${{ github.event.repository.name }}"
-          title: Premake Config 
-          body: | # Premake config PR
-            Premake file configuration with repo_name as ${{ github.event.repository.name }}
-          branch: premake-config
-        #create-pull-request:
-        #  needs: configure-project
-        #  runs-on: "windows-latest"
+      - uses: actions/checkout@v4
+
+      - name: Generate .sln
+        run: ./premake/premake5.exe vs2022 
+
+      - name: setup-msbuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build project
+        run: msbuild ylang.sln /p:Configuration=Release
+
+      - name: Run Lexer tests
+        run: ./bin/Release/lexer_tests/lexer_tests.exe
+
+      - name: Run Parser tests
+        run: ./bin/Release/parser_tests/parser_tests.exe
+
+      - name: Run Value tests
+        run: ./bin/Release/value_tests/value_tests.exe
