@@ -7,3 +7,11 @@ jobs:
     runs-on: "windows-latest"
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10.12'
+
+      - name: Generate .sln
+        uses: actions/generate-solution@v1
