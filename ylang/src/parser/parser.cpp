@@ -27,115 +27,58 @@ namespace ylang {
          return ast;
         }
       } catch (const ParserError& e) {
+        printfmt("Error in file '{}'" , tokens.src_name);
         printerr(ErrorType::PARSER , "Failed to parse declaration");
         printerr(ErrorType::PARSER , e.what());
-        Sync();
+        return ast;
       } catch (const InternalError& e) {
+        printfmt("Error in file '{}'" , tokens.src_name);
         printerr(ErrorType::INTERNAL , "Internal error");
         printerr(ErrorType::INTERNAL , e.what());
-        Sync();
+        return ast;
       } catch (const std::exception& e) {
+        printfmt("Error in file '{}'" , tokens.src_name);
         printerr(ErrorType::INTERNAL , "Internal error");
         printerr(ErrorType::INTERNAL , e.what());
-        Sync();
-      } catch (TokenType type) {
-        Stmt* stmt = ParseDeclaration();
-        if (stmt != nullptr) {
-          print("Failed to recover from error, aborting...");
-          return ast;
-        }
-
-        if (type == TokenType::CLOSE_BRACE) {
-          if (Match({ TokenType::SEMICOLON })) {
-            // do nothing
-          }
-          ast.nodes.push_back(stmt);
-        } else if (type == TokenType::OPEN_BRACE) {
-          continue;
-        } else if (type == TokenType::SEMICOLON) {
-          continue;
-        } else if (type == TokenType::END) {
-          return ast;
-        }
+        return ast;
       }
     }
 
     Consume(TokenType::END , "Expected end of file");
 
     ast.Validate();
+    ast.name = tokens.src_name;
+    ast.dependencies = tokens.dependency_names;
     return ast;
   }
 
   Stmt* Parser::ParseDeclaration() {
-    try {
-      if (Match({ TokenType::IDENTIFIER } , false)) {
-        /// variable and function declarations
-        return ResolveDeclaration();
-      }
-      if (Match({ TokenType::OPEN_BRACE } , false)) {
-        return ParseBlock();
-      }
-      if (Match({ TokenType::PRINT })) {
-        printfmt("Parsing print statement");
-        Stmt* print = ParsePrint();
-        printfmt("Parsed print statement: {}", print->ToString());
-        return print;
-      }
-      if (Match({ TokenType::IF })) {
-        return ParseIf();
-      }
-      if (Match({ TokenType::WHILE })) {
-        return ParseWhile();
-      }
-      if (Match({ TokenType::FOR })) {
-        return ParseFor();
-      }
-      if (Match({ TokenType::RETURN } , false)) {
-        return ParseReturn();
-      }
-      if (Match({ TokenType::STRUCT })) {
-        return ParseStructDeclaration();
-      }
-      return ParseStatement();
-    } catch (const ParserError& e) {
-      printerr(ErrorType::PARSER , "Failed to parse declaration");
-      printerr(ErrorType::PARSER , e.what());
-      Sync();
-    } catch (const InternalError& e) {
-      printerr(ErrorType::INTERNAL , "Internal error");
-      printerr(ErrorType::INTERNAL , e.what());
-      Sync();
-    } catch (TokenType type) { 
-      std::vector<Stmt*> stmts;
-      Stmt* stmt = RecoverFrom(type , stmts);
-      if (stmt == nullptr) {
-        throw Error("Failed to recover from error");
-      }
-
-      if (type == TokenType::CLOSE_BRACE) {
-        if (Match({ TokenType::SEMICOLON })) {
-          // do nothing
-        }
-        // valid block maybe ?
-        return stmt;
-      } else if (type == TokenType::OPEN_BRACE) {
-        return ParseBlock();
-      } else if (type == TokenType::SEMICOLON) {
-        return ParseDeclaration();
-      } else if (type == TokenType::END) {
-        throw TokenType::END;
-      }
-
-      throw Error("UNDEFINED error");
-    } catch (const std::exception& e) {
-      printerr(ErrorType::INTERNAL , "UNDEFINED error");
-      printerr(ErrorType::INTERNAL , e.what());
-      Sync(); 
-
-      throw Error("UNDEFINED error");
+    if (Match({ TokenType::IDENTIFIER } , false)) {
+      /// variable and function declarations
+      return ResolveDeclaration();
     }
-
-    throw Error("UNREACHABLE CODE");
+    if (Match({ TokenType::OPEN_BRACE } , false)) {
+      return ParseBlock();
+    }
+    if (Match({ TokenType::PRINT })) {
+      return ParsePrint();
+    }
+    if (Match({ TokenType::IF })) {
+      return ParseIf();
+    }
+    if (Match({ TokenType::WHILE })) {
+      return ParseWhile();
+    }
+    if (Match({ TokenType::FOR })) {
+      return ParseFor();
+    }
+    if (Match({ TokenType::RETURN } , false)) {
+      return ParseReturn();
+    }
+    if (Match({ TokenType::STRUCT })) {
+      return ParseStructDeclaration();
+    }
+    return ParseStatement();
   }
 
   Stmt* Parser::ResolveDeclaration() {
@@ -207,15 +150,15 @@ namespace ylang {
         return ParseVarDeclaration(name , type);
       }
 
-      throw Error(fmtstr("Expected '=', ':', or '(' after identifier found {} = {}" , TokenTypeStrings[Peek().type] ,
+      throw Error(fmtstr("Expected '=', ':', or '(' after identifier '{}' found {} = {}" , Previous().value , TokenTypeStrings[Peek().type] ,
                           Peek().value));
     }
 
-    throw Error(fmtstr("Expected '=', or ':' after identifier found {} = {}" , TokenTypeStrings[Peek().type] ,
+    throw Error(fmtstr("Expected '=', or ':' after identifier '{}' found {} = {}" , Previous().value , TokenTypeStrings[Peek().type] ,
                         Peek().value));
   }
       
-  Stmt* Parser::ParseCallable(CallableType type , const Token& name) {
+  Stmt* Parser::ParseCallable(CallableType type , const Token& name , const Token& ret_type) {
     switch (type) {
       case FUNCTION:
         return ParseFunctionDeclaration(name);
@@ -225,7 +168,7 @@ namespace ylang {
     return nullptr; 
   }
       
-  Stmt* Parser::ParseFunctionDeclaration(const Token& name) {
+  Stmt* Parser::ParseFunctionDeclaration(const Token& name , const Token& ret_type) {
     std::vector<Token> params;
     if (Match({ TokenType::OPEN_PAREN })) {
       while (!Check(TokenType::CLOSE_PAREN) && !AtEnd()) {
@@ -243,10 +186,18 @@ namespace ylang {
       throw current;
     }
 
-    return new FunctionStmt(name , params , body);
+    if (Match({ TokenType::SEMICOLON })) {
+      // do nothing
+    }
+
+    return new FunctionStmt(name , params , ret_type , body);
   }
 
   Stmt* Parser::ParseVarDeclaration(const Token& name , const Token& type) {
+    if (Match({ TokenType::OPEN_PAREN , TokenType::OPEN_BRACE } , false)) {
+      return ParseCallable(FUNCTION , name , type);
+    }
+
     Expr* initializer = ParseExpression();
 
     Consume(TokenType::SEMICOLON , "Expected semicolon");
@@ -360,38 +311,11 @@ namespace ylang {
     std::vector<Stmt*> stmts;
 
     while (!Check(TokenType::CLOSE_BRACE) && !AtEnd()) {
-      try {
-
-        Stmt* stmt = ParseDeclaration();
-        if (stmt != nullptr) {
-          stmts.push_back(stmt);
-        } else {
-          throw Error("Failed to parse block");
-        }
-
-      } catch (const ParserError& e) {
-        printerr(ErrorType::PARSER , e.what());
-        Sync();
-      } catch (TokenType type) {
-        Stmt* stmt = RecoverFrom(type , stmts);
-        if (stmt == nullptr) {
-          throw Error("Failed to recover from error");
-        }
-        if (type == TokenType::CLOSE_BRACE) {
-          if (Match({ TokenType::SEMICOLON })) {
-            // do nothing
-          }
-          // valid block maybe ?
-          return stmt;
-        } else if (type == TokenType::OPEN_BRACE) {
-          stmts.push_back(stmt);
-        } else if (type == TokenType::SEMICOLON) {
-          stmts.push_back(stmt);
-        } else if (type == TokenType::END) {
-          throw TokenType::END;
-        }
-
-        return new BlockStmt(stmts);
+      Stmt* stmt = ParseDeclaration();
+      if (stmt != nullptr) {
+        stmts.push_back(stmt);
+      } else {
+        throw Error("Failed to parse block");
       }
     }
 
@@ -752,18 +676,18 @@ namespace ylang {
 
   Token Parser::Peek() const {
     if (AtEnd()) {
-      return tokens.back();
+      return tokens.tokens.back();
     }
 
-    return tokens[current];
+    return tokens.tokens[current];
   }
 
   Token Parser::Previous() const {
     if (current == 0) {
-      return tokens.front();
+      return tokens.tokens.front();
     }
 
-    return tokens[current - 1];
+    return tokens.tokens[current - 1];
   }
 
   Token Parser::Advance() {
@@ -861,7 +785,7 @@ namespace ylang {
 
     return false;
   }
-  
+
   void Parser::Sync() {
     printerr(ErrorType::PARSER , fmtstr("Syncing parser, discarding {} = {}" , TokenTypeStrings[Peek().type] , Peek().value));
 
@@ -869,14 +793,14 @@ namespace ylang {
       /// open brace is peek not previoud because we can parse a new block
       if (Peek().type == TokenType::OPEN_BRACE || Peek().type == TokenType::END) {
         printerr(ErrorType::PARSER , "Syncing parser, found open brace");
-        throw Peek().type;
+        return;
       }
 
       /// here we abandon the lost statement and try to parse a new one
       if (Previous().type == TokenType::CLOSE_BRACE ||
           Previous().type == TokenType::SEMICOLON) {
         printerr(ErrorType::PARSER , "Syncing parser, found close brace or semicolon");
-        throw Previous().type;
+        return;
       }
 
       switch (Peek().type) {

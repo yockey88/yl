@@ -9,6 +9,9 @@ namespace ylang {
 
   class Ast {
     public:
+      std::string name = "";
+      std::vector<std::string> dependencies{};
+
       inline bool IsValid() const { return valid; }
       std::vector<Stmt*>& Nodes();
 

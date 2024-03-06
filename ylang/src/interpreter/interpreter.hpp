@@ -3,6 +3,7 @@
 
 #include <stack>
 
+#include "defines.hpp"
 #include "tree_walker.hpp"
 #include "ast/ast_expr.hpp"
 #include "ast/ast_stmt.hpp"
@@ -10,11 +11,6 @@
 #include "env/environment.hpp"
 
 namespace ylang {
-
-  enum ExitCode {
-    OK = 0,
-    ERROR = 1
-  };
 
   class Function : public Callable {
     public:

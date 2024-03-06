@@ -2,9 +2,10 @@ import project_settings
 import os , subprocess , sys
 from pathlib import Path
 
+arguments = sys.argv[1:]
 args = project_settings.ProcessArguments(sys.argv)
-config = project_settings.GetArgValue(args , "c" , "debug")
-project = project_settings.GetArgValue(args , "p" , project_settings.EXE_NAME)
+config = "" # project_settings.GetArgValue(args , "c" , "debug")
+project = "" # project_settings.GetArgValue(args , "p" , project_settings.EXE_NAME)
 test = project_settings.GetArgValue(args , "t" , "false")
 
 def CheckAndRunTest(test_path):
@@ -63,14 +64,9 @@ exepath = "{}/bin/{}/{}".format(os.getcwd() , config , project_settings.EXE_NAME
 ret = 0
 
 if project_settings.IsWindows():
-    print("Running: {}\\run.bat {} {}".format(project_settings.TOOLS_DIR , config , project))
-    ret = subprocess.call(
-        [
-            "cmd.exe" , "/c" , "{}\\run.bat".format(project_settings.TOOLS_DIR) , 
-            config , project ,
-        ] , 
-        cwd=os.getcwd()
-    )
+    call_args = [ "cmd.exe" , "/c" , "{}\\run.bat".format(project_settings.TOOLS_DIR) , "Debug" , project_settings.EXE_NAME ] 
+    call_args.extend(arguments);
+    ret = subprocess.call(call_args , cwd=os.getcwd())
 else:
     ret = subprocess.call(["{}".format(exepath)] , cwd=exepath)
 

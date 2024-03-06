@@ -3,15 +3,16 @@
 
 #include <gtest/gtest.h>
 
+#include "preprocessor/preprocessor.hpp"
 #include "ast/ast.hpp"
 
 class parser_tests1 : public ::testing::Test {
   protected:
-    std::string content1 = "2";
-    std::string content2 = "2 + 2";
+    ylang::ProcessedFile content1 = { "2" , "" };
+    ylang::ProcessedFile content2 = { "2 + 2" , "" };
 
-    std::string content3 = "2 * 2";
-    std::string content4 = "2 / 2";
+    ylang::ProcessedFile content3 = { "2 * 2" , "" };
+    ylang::ProcessedFile content4 = { "2 / 2" , "" };
 
     ylang::Ast ast;
 };

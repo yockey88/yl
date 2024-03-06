@@ -5,6 +5,7 @@
 
 #include "token.hpp"
 #include "errors.hpp"
+#include "lexer/lexer.hpp"
 #include "ast/ast.hpp"
 
 template <>
@@ -25,7 +26,7 @@ namespace ylang {
 
   class Parser {
     public:
-      Parser(const std::vector<Token>& tokens) 
+      Parser(const TokenList& tokens) 
         : tokens(tokens) {}
       ~Parser() = default;
 
@@ -33,7 +34,7 @@ namespace ylang {
 
     private:
       Ast ast;
-      std::vector<Token> tokens;
+      TokenList tokens;
 
       size_t current = 0;
 
@@ -42,8 +43,9 @@ namespace ylang {
       Stmt* ParseDeclaration();
       Stmt* ResolveDeclaration();
 
-      Stmt* ParseCallable(CallableType type , const Token& name);
-      Stmt* ParseFunctionDeclaration(const Token& name);
+      Stmt* ParseCallable(CallableType type , const Token& name , 
+                          const Token& ret_type = Token(SourceLocation{} , TokenType::UNKNOWN , ""));
+      Stmt* ParseFunctionDeclaration(const Token& name , const Token& ret_type = Token(SourceLocation{} , TokenType::UNKNOWN , ""));
       Stmt* ParseVarDeclaration(const Token& name , 
           const Token& type = Token(SourceLocation{} , TokenType::UNKNOWN , ""));
       Stmt* ParseArrayDeclaration(const Token& name , 
@@ -89,7 +91,7 @@ namespace ylang {
       bool MatchLiterals(bool advance = true);
       bool MatchTypes(bool advance = true);
       bool DeclaredType(const Token& type) const;
-
+      
       void Sync();
       Stmt* RecoverFrom(TokenType type , std::vector<Stmt*>& stmts);
 

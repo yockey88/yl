@@ -86,11 +86,11 @@ namespace ylang {
   class IfStmt : public Stmt {
     public:
       IfStmt(Expr* condition , Stmt* thenBranch , Stmt* elseBranch = nullptr) 
-        : Stmt(NodeType::IF_STMT) , condition(condition) , thenBranch(thenBranch) , elseBranch(elseBranch) {}
+        : Stmt(NodeType::IF_STMT) , condition(condition) , then_branch(then_branch) , else_branch(else_branch) {}
       virtual ~IfStmt() {
         delete condition;
-        delete thenBranch;
-        delete elseBranch;
+        delete then_branch;
+        delete else_branch;
       }
 
       virtual std::string ToString() const override;
@@ -98,8 +98,8 @@ namespace ylang {
       virtual std::vector<Instruction> Emit() override;
 
       Expr* condition;
-      Stmt* thenBranch;
-      Stmt* elseBranch;
+      Stmt* then_branch;
+      Stmt* else_branch;
   };
 
   class WhileStmt : public Stmt {
@@ -134,9 +134,9 @@ namespace ylang {
 
   class FunctionStmt : public Stmt {
     public:
-      FunctionStmt(const Token& name , const std::vector<Token>& params , 
+      FunctionStmt(const Token& name , const std::vector<Token>& params , const Token& type ,
                    Stmt* body = nullptr) 
-        : Stmt(NodeType::FUNCTION_STMT) , name(name) , params(params) , body(body) {}
+        : Stmt(NodeType::FUNCTION_STMT) , name(name) , params(params) , body(body) , type(type) {}
       virtual ~FunctionStmt() {
         delete body;
       }
@@ -148,7 +148,7 @@ namespace ylang {
       Token name;
       std::vector<Token> params;
       Stmt* body;
-  
+      Token type;
   };
 
   class StructStmt : public Stmt {

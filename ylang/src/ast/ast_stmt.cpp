@@ -84,9 +84,9 @@ namespace ylang {
   }
 
   std::string IfStmt::ToString() const {
-    std::string str = fmtstr("if ({}) {}" , condition->ToString() , thenBranch->ToString());
-    if (elseBranch != nullptr) {
-      str += fmtstr(" else {}" , elseBranch->ToString());
+    std::string str = fmtstr("if ({}) {}" , condition->ToString() , then_branch->ToString());
+    if (else_branch != nullptr) {
+      str += fmtstr(" else {}" , else_branch->ToString());
     }
     return str;
   }

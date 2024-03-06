@@ -28,6 +28,18 @@ namespace {
     return *reinterpret_cast<uint64_t*>(value);
   }
 
+  class PreprocessorError : public std::runtime_error {
+    public:
+      PreprocessorError(SourceLocation loc, const std::string &message , ErrorType type = ErrorType::PREPROCESSOR)
+          : std::runtime_error(message + fmt_error(loc)) , type(type) {}
+    
+      const char *what() const noexcept override {
+        return std::runtime_error::what();
+      }
+
+      ErrorType type;
+  };
+
   class LexerError : public std::runtime_error {
     public:
       LexerError(SourceLocation loc, const std::string &message)
@@ -46,6 +58,18 @@ namespace {
       const char *what() const noexcept override {
         return std::runtime_error::what();
       }
+  };
+
+  class StaticAnalysisError : public std::runtime_error {
+    public:
+      StaticAnalysisError(SourceLocation loc , const std::string &message , ErrorType type)
+          : std::runtime_error(message + fmt_error(loc)) , type(type) {}
+    
+      const char *what() const noexcept override {
+        return std::runtime_error::what();
+      }
+
+      ErrorType type;
   };
 
   class CompilerError : public std::runtime_error {

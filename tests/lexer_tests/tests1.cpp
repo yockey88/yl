@@ -6,7 +6,7 @@
 #include "lexer_tests.hpp"
 
 TEST_F(lexer_tests1 , add_string) {
-  std::cout << "[ Content ] : " << content1 << std::endl;
+  std::cout << "[ Content ] : " << content1.src << std::endl;
   ylang::Lexer lexer(content1);
   tokens = lexer.Lex();
 
@@ -19,7 +19,7 @@ TEST_F(lexer_tests1 , add_string) {
 }
 
 TEST_F(lexer_tests1 , add_string2) {
-  std::cout << "[ Content ] : " << content1 << std::endl;
+  std::cout << "[ Content ] : " << content1.src << std::endl;
   ylang::Lexer lexer(content1);
   tokens = lexer.Lex();
 
@@ -41,7 +41,7 @@ TEST_F(lexer_tests1 , add_string2) {
 }
 
 TEST_F(lexer_tests1 , hex_string) {
-  std::cout << "[ Content ] : " << content2 << std::endl;
+  std::cout << "[ Content ] : " << content2.src << std::endl;
   ylang::Lexer lexer(content2);
   tokens = lexer.Lex();
 
@@ -62,7 +62,7 @@ TEST_F(lexer_tests1 , hex_string) {
 }
 
 TEST_F(lexer_tests1 , float_string) {
-  std::cout << "[ Content ] : " << content3 << std::endl;
+  std::cout << "[ Content ] : " << content3.src << std::endl;
   ylang::Lexer lexer(content3);
   tokens = lexer.Lex();
 
@@ -78,7 +78,7 @@ TEST_F(lexer_tests1 , float_string) {
 }
 
 TEST_F(lexer_tests1 , scientific_string) {
-  std::cout << "[ Content ] : " << content4 << std::endl;
+  std::cout << "[ Content ] : " << content4.src << std::endl;
   ylang::Lexer lexer(content4);
   tokens = lexer.Lex();
 
@@ -96,7 +96,7 @@ TEST_F(lexer_tests1 , scientific_string) {
 }
 
 TEST_F(lexer_tests1 , scientific_string2) {
-  std::cout << "[ Content ] : " << content5 << std::endl;
+  std::cout << "[ Content ] : " << content5.src << std::endl;
   ylang::Lexer lexer(content5);
   tokens = lexer.Lex();
 
@@ -120,7 +120,7 @@ TEST_F(lexer_tests1 , blank_string) {
 }
 
 TEST_F(lexer_tests1 , error_string1) {
-  std::cout << "[ Content ] : " << err_content1 << std::endl;
+  std::cout << "[ Content ] : " << err_content1.src << std::endl;
   ylang::Lexer lexer(err_content1);
   tokens = lexer.Lex();
 
@@ -128,7 +128,7 @@ TEST_F(lexer_tests1 , error_string1) {
 }
 
 TEST_F(lexer_tests1 , error_string2) {
-  std::cout << "[ Content ] : " << err_content2 << std::endl;
+  std::cout << "[ Content ] : " << err_content2.src << std::endl;
   ylang::Lexer lexer(err_content2);
   tokens = lexer.Lex();
 
@@ -136,7 +136,7 @@ TEST_F(lexer_tests1 , error_string2) {
 }
 
 TEST_F(lexer_tests1 , error_string3) {
-  std::cout << "[ Content ] : " << err_content3 << std::endl;
+  std::cout << "[ Content ] : " << err_content3.src << std::endl;
   ylang::Lexer lexer(err_content3);
   tokens = lexer.Lex();
 
@@ -144,7 +144,7 @@ TEST_F(lexer_tests1 , error_string3) {
 }
 
 TEST_F(lexer_tests1 , error_string4) {
-  std::cout << "[ Content ] : " << err_content4 << std::endl;
+  std::cout << "[ Content ] : " << err_content4.src << std::endl;
   ylang::Lexer lexer(err_content4);
   tokens = lexer.Lex();
 
