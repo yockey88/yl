@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Generate .sln
-        run: python3 cli.py gensln
+        run: ./premake/premake5.exe vs2022 
 
       - name: setup-msbuild
         uses: microsoft/setup-msbuild@v2
