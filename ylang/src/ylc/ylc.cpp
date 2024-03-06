@@ -171,6 +171,17 @@ constexpr std::string_view detailed_help =
 
     if (args.TestFlag(flags::VERSION)) {
       ylc.PrintVersion();
+      return ExitCode::OK;
+    }
+
+    if (args.TestFlag(flags::HELP)) {
+      ylc.PrintHelp("");
+      return ExitCode::OK;
+    }
+
+    if (args.TestFlag(flags::HELP_MORE)) {
+      ylc.PrintHelp(args.GetArgs(flags::HELP_MORE).front());
+      return ExitCode::OK;
     }
 
     ExitCode exit = ExitCode::OK;
@@ -210,6 +221,20 @@ constexpr std::string_view detailed_help =
   Config YLC::Configure(const ArgParser& arguments) {
     if (arguments.TestFlag(flags::DEBUG) || arguments.TestFlag(flags::VERBOSE)) {
       print("============== VERBOSE >");
+    }
+
+    if (arguments.TestFlag(flags::HELP)) {
+      return Config{ Mode::HELP, "", std::nullopt, std::nullopt };
+    }
+
+    if (arguments.TestFlag(flags::HELP_MORE)) {
+      auto args = arguments.GetArgs(flags::HELP_MORE);
+      if (args.size() != 1 || args[0].empty()) {
+        printerr(ErrorType::INVALID_ARGS, "No argument provided for --help-more");
+        return Config{ Mode::ERR, "", std::nullopt, std::nullopt };
+      }
+
+      return Config{ Mode::HELP_MORE, args[0], std::nullopt, std::nullopt };
     }
   
     if (arguments.TestFlag(flags::CREATE_PROJECT)) {
@@ -257,8 +282,13 @@ constexpr std::string_view detailed_help =
   
   void YLC::PrintHelp(const std::string& help_more) {
     if (help_more.empty()) {
-      print(help::usage);
-      print(help::options);
+      print("Options: ");
+      for (const auto& arg : kArguments) {
+        std::string out = fmtstr(" {} , {} ", arg.flag, arg.long_flag);
+        uint32_t padding = kPadding - out.size();
+        print(out + std::string(padding, ' ') + std::string{ arg.description });
+
+      }
       return;
     }
 

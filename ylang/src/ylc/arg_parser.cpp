@@ -3,32 +3,7 @@
 #include <stdexcept>
 #include <filesystem>
 
-#include "errors.hpp"
-#include "util/io.hpp"
-
 namespace ylang {
-
-namespace {
-
-  constexpr static uint32_t kNumArgs = 14;
-  constexpr std::array<Argument, kNumArgs> kArguments = {
-    Argument("-h", "--help", "Prints help message" , flags::HELP , false),
-    Argument("--hm", "--help-more", "Prints more detailed help message" , flags::HELP_MORE , true),
-    Argument("-v", "--version", "Prints version information" , flags::VERSION , false),
-    Argument("-d", "--debug", "Prints debug information" , flags::DEBUG , false),
-    Argument("-V", "--verbose", "Prints verbose information" , flags::VERBOSE , false),
-    Argument("-pp", "--preprocess", "Preprocesses the input file" , flags::PREPROCESS , false),
-    Argument("-l", "--lex", "Lexes the input file" , flags::LEX , false),
-    Argument("-p", "--parse", "Parses the input file" , flags::PARSE , false),
-    Argument("-o", "--output", "Specifies the output file" , flags::OUTPUT , false) ,
-    Argument("-I", "--include", "Specifies the include directory" , flags::INCLUDE , true),
-    Argument("-f", "--force", "Forces directory creation or file overwrite" , flags::FORCE , false),
-    Argument("" , "new" , "Creates a new project" , flags::CREATE_PROJECT , true),
-    Argument("" , "build" , "Builds a project" , flags::BUILD , true),
-    Argument("" , "run" , "Runs a project" , flags::RUN , true),
-  };
-
-} // namespace
 
   bool operator==(const std::string& str, const Argument& arg) {  
     if (arg.flag.empty()) {
@@ -49,34 +24,33 @@ namespace {
     if (argc < 2) {
       throw std::runtime_error("No arguments provided");
     }
+
+    executable = argv[0];
   
-    for (int i = 0; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
       raw_args.push_back(argv[i]);
       if (raw_args.back().size() < 2) {
         throw std::runtime_error(fmtstr("Invalid argument : {}", raw_args.back()));
       }
     }
   
-    executable = raw_args[0];
 
     while (!AtEnd()) {
       ProcessFlag();
     }
 
+    if (TestFlag(flags::HELP) && TestFlag(flags::HELP_MORE)) {
+      RemoveFlag(flags::HELP);
+    }
+
     if (TestFlag(flags::CREATE_PROJECT) && TestFlag(flags::BUILD)) {
-      print(" -- Disregarding build command");
     }
 
     if (TestFlag(flags::CREATE_PROJECT) && TestFlag(flags::RUN)) {
-      print(" -- Disregarding run command");
     }
 
     if (TestFlag(flags::BUILD) && TestFlag(flags::RUN)) {
       RemoveFlag(flags::BUILD); 
-    }
-
-    if (TestFlag(flags::HELP) && TestFlag(flags::HELP_MORE)) {
-      RemoveFlag(flags::HELP);
     }
 
     if (TestFlag(flags::CREATE_PROJECT)) {
@@ -108,14 +82,14 @@ namespace {
     }
 
     for (const auto& arg : kArguments) {
-      if (flag == arg) {
+      if (flag == arg || flag == arg.long_flag) {
         if (arg.has_args) {
-          ConsumeArgs(arg);
+          return ConsumeArgs(arg);
         } else {
-          ConsumeArg(arg);
+          return ConsumeArg(arg);
         }
-        return;
       } 
+      continue;
     }
   
     throw std::runtime_error(fmtstr("Invalid flag : {}", flag));

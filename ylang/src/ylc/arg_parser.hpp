@@ -6,6 +6,9 @@
 #include <optional>
 #include <unordered_map>
 
+#include "errors.hpp"
+#include "util/io.hpp"
+
 namespace ylang {
    
   struct Argument {
@@ -28,6 +31,26 @@ namespace ylang {
 
   bool operator==(const std::string& str, const Argument& arg);
 
+  constexpr static uint32_t kNumArgs = 14;
+  constexpr std::array<Argument, kNumArgs> kArguments = {
+    Argument("-h", "--help", "Prints help message" , flags::HELP , false),
+    Argument("--hm", "--help-more", "Prints more detailed help message" , flags::HELP_MORE , true),
+    Argument("-v", "--version", "Prints version information" , flags::VERSION , false),
+    Argument("-d", "--debug", "Prints debug information" , flags::DEBUG , false),
+    Argument("-V", "--verbose", "Prints verbose information" , flags::VERBOSE , false),
+    Argument("-pp", "--preprocess", "Preprocesses the input file" , flags::PREPROCESS , false),
+    Argument("-l", "--lex", "Lexes the input file" , flags::LEX , false),
+    Argument("-p", "--parse", "Parses the input file" , flags::PARSE , false),
+    Argument("-o", "--output", "Specifies the output file" , flags::OUTPUT , false) ,
+    Argument("-I", "--include", "Specifies the include directory" , flags::INCLUDE , true),
+    Argument("-f", "--force", "Forces directory creation or file overwrite" , flags::FORCE , false),
+    Argument("" , "new" , "Creates a new project" , flags::CREATE_PROJECT , true),
+    Argument("" , "build" , "Builds a project" , flags::BUILD , true),
+    Argument("" , "run" , "Runs a project" , flags::RUN , true),
+  };
+
+  constexpr uint32_t kPadding = 43;
+
   class ArgParser {
     public:
       ArgParser(int argc , char* argv[]) { ParseArgs(argc, argv); }
@@ -45,7 +68,7 @@ namespace ylang {
       bool TestFlag(uint64_t flag) const;
 
     private:
-      uint32_t index = 1;
+      uint32_t index = 0;
 
       uint64_t flags = 0;
       std::vector<std::string> raw_args;
