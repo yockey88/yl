@@ -84,8 +84,29 @@ namespace ylang {
   Stmt* Parser::ResolveDeclaration() {
     Token name = Consume(TokenType::IDENTIFIER , "Expected identifier");
 
+    if (DeclaredVar(name)) {
+      if (Match({ TokenType::EQUAL })) {
+        Expr* assignment = ParseAssignment();
+        Consume(TokenType::SEMICOLON , "Expected semicolon after assignment");
+        return new ExprStmt(assignment);
+      } else {
+        throw Error(fmtstr("Variable '{}' already declared in this scope" , name.value));
+      }
+    }
+
     if (Match({ TokenType::SEMICOLON })) {
+      declarations[current_scope].vars.push_back(name);
       return new VarDeclStmt(name , nullptr);
+    }
+
+    if (DeclaredFunc(name)) {
+      if (Match({ TokenType::OPEN_PAREN })) {
+        Expr* expr = FinishCall(new VarExpr(name));
+        Consume(TokenType::SEMICOLON , "Expected semicolon after function call");
+        return new ExprStmt(expr);
+      } else {
+        throw Error(fmtstr("Unknown use of declared function identifer {}" , name.value));
+      }
     }
 
     if (Match({ TokenType::OPEN_PAREN } , false)) {
@@ -94,6 +115,9 @@ namespace ylang {
       do {
         if (Match({ TokenType::OPEN_PAREN })) {
           expr = FinishCall(expr);
+        } else if (Match({ TokenType::DOT })) {
+          Token field = Consume(TokenType::IDENTIFIER , "Expected identifier after '.'");
+          expr = new ObjAccessExpr(expr , field);
         } else {
           break;
         }
@@ -125,6 +149,8 @@ namespace ylang {
 
       Expr* initializer = ParseExpression();
       Consume(TokenType::SEMICOLON , "Expected semicolon after assignment expression");
+
+      declarations[current_scope].vars.push_back(name);
       return new VarDeclStmt(name , initializer);
     }
 
@@ -183,13 +209,14 @@ namespace ylang {
     
     Stmt* body = ParseBlock();
     if (body == nullptr) {
-      throw current;
+      throw Error("Expected function body");
     }
 
     if (Match({ TokenType::SEMICOLON })) {
       // do nothing
     }
 
+    declarations[current_scope].funcs.push_back(name);
     return new FunctionStmt(name , params , ret_type , body);
   }
 
@@ -199,9 +226,9 @@ namespace ylang {
     }
 
     Expr* initializer = ParseExpression();
-
     Consume(TokenType::SEMICOLON , "Expected semicolon");
 
+    declarations[current_scope].vars.push_back(name);
     if (type.type == TokenType::UNKNOWN) {
       return new VarDeclStmt(name , initializer);
     }
@@ -232,7 +259,7 @@ namespace ylang {
       
   Stmt* Parser::ParseStructDeclaration() {
     Token name = Consume(TokenType::IDENTIFIER , "Expected identifier for struct declaration");
-    declared_types.push_back(name);
+    declarations[current_scope].types.push_back(name);
 
     if (Match({ TokenType::SEMICOLON })) {
       return new StructStmt(name , {});
@@ -244,12 +271,8 @@ namespace ylang {
 
         Token field = Consume(TokenType::IDENTIFIER , "Expected identifier for struct field");
 
-        if (Match({ TokenType::SEMICOLON })) {
-          fields.push_back(new VarDeclStmt(field , nullptr));
-          continue;
-        }
-
         Consume(TokenType::COLON , "Expected colon after struct field identifier");
+
         Token type = ConsumeType("Expected type for struct field");
 
         if (Match({ TokenType::SEMICOLON })) {
@@ -310,6 +333,8 @@ namespace ylang {
     Consume(TokenType::OPEN_BRACE , "Expected opening brace for function declaration"); 
     std::vector<Stmt*> stmts;
 
+    current_scope++;
+
     while (!Check(TokenType::CLOSE_BRACE) && !AtEnd()) {
       Stmt* stmt = ParseDeclaration();
       if (stmt != nullptr) {
@@ -323,6 +348,11 @@ namespace ylang {
     if (Match({ TokenType::SEMICOLON })) {
       // do nothing
     }
+
+    declarations[current_scope].types.clear();
+    declarations[current_scope].vars.clear();
+    declarations[current_scope].funcs.clear();
+    current_scope--;
 
     return new BlockStmt(stmts);
   }
@@ -719,10 +749,8 @@ namespace ylang {
       case TokenType::F64:
         return Advance();
       default:
-        for (const auto& type : declared_types) {
-          if (Peek().value == type.value) {
-            return Advance();
-          }
+        if (DeclaredType(Peek())) {
+          return Advance();
         }
         break;
     }
@@ -777,9 +805,35 @@ namespace ylang {
   }
       
   bool Parser::DeclaredType(const Token& type) const {
-    for (const auto& t : declared_types) {
-      if (t.value == type.value) {
-        return true;
+    for (size_t i = current_scope; i > 0; i--) {
+      for (const auto& t : declarations[i].types) {
+        if (t.value == type.value) {
+          return true;
+        }
+      } 
+    }
+
+    return false;
+  }
+
+  bool Parser::DeclaredVar(const Token& var) const {
+    for (size_t i = current_scope; i > 0; i--) {
+      for (const auto& v : declarations[i].vars) {
+        if (v.value == var.value) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  bool Parser::DeclaredFunc(const Token& func) const {
+    for (size_t i = current_scope; i > 0; i--) {
+      for (const auto& f : declarations[i].funcs) {
+        if (f.value == func.value) {
+          return true;
+        }
       }
     }
 

@@ -164,6 +164,7 @@ constexpr std::string_view detailed_help =
 
   ExitCode YLC::Main(int argc, char *argv[]) {
     print("=== YLC ===");
+    std::filesystem::current_path("C:/Yock/code/ylsl");
     ArgParser args(argc, argv);
 
     YLC ylc;
