@@ -3,6 +3,8 @@ bin/
 bin_obj/
 tools/
 programs/
+cli.py
+compile_commands.json
 
 # Prerequisites
 *.d
