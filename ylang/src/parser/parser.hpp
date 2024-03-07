@@ -23,6 +23,11 @@ namespace ylang {
     NUM_CALLABLE_TYPES
   };
 
+  struct ScopeDeclarations {
+    std::vector<Token> types;
+    std::vector<Token> vars;
+    std::vector<Token> funcs;
+  };
 
   class Parser {
     public:
@@ -38,9 +43,10 @@ namespace ylang {
 
       size_t current = 0;
 
-      std::vector<Token> declared_types;
-      std::vector<Token> declared_vars;
-      std::vector<Token> declared_funcs;
+      constexpr static uint32_t kMaxScopeNesting = 100;
+      std::array<ScopeDeclarations , kMaxScopeNesting> declarations;
+
+      uint32_t current_scope = 0;
 
       Stmt* ParseDeclaration();
       Stmt* ResolveDeclaration();
@@ -93,6 +99,8 @@ namespace ylang {
       bool MatchLiterals(bool advance = true);
       bool MatchTypes(bool advance = true);
       bool DeclaredType(const Token& type) const;
+      bool DeclaredVar(const Token& var) const;
+      bool DeclaredFunc(const Token& func) const;
       
       void Sync();
       Stmt* RecoverFrom(TokenType type , std::vector<Stmt*>& stmts);

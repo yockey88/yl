@@ -44,7 +44,6 @@ namespace ylang {
   }
 
   void DeclarationResolver::Visit(AssignExpr& stmt) {
-    printfmt("Resolving assign expr : {}", stmt.name.value);
     Resolve(stmt.value);
     ResolveLocal(stmt , stmt.name);
   }
@@ -77,8 +76,6 @@ namespace ylang {
     }
 
     Define(stmt.name);
-
-    DumpScopes();
   }
 
   void DeclarationResolver::Visit(ArrayDeclStmt& stmt) {
@@ -143,6 +140,7 @@ namespace ylang {
   }
 
   void DeclarationResolver::EndScope() {
+    scopes[current_scope].clear();
     current_scope--;
   }
 
@@ -165,7 +163,7 @@ namespace ylang {
       for (auto& [key , defined] : scopes[i]) {
         if (key == name.value && !defined) {
           throw Error(name , fmtstr("Cannot read local variable in its own initializer"));
-        } else {
+        } else if (key == name.value) {
           return;
         }
       }

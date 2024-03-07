@@ -85,7 +85,7 @@ namespace ylang {
 
   class IfStmt : public Stmt {
     public:
-      IfStmt(Expr* condition , Stmt* thenBranch , Stmt* elseBranch = nullptr) 
+      IfStmt(Expr* condition , Stmt* then_branch , Stmt* else_branch = nullptr) 
         : Stmt(NodeType::IF_STMT) , condition(condition) , then_branch(then_branch) , else_branch(else_branch) {}
       virtual ~IfStmt() {
         delete condition;
