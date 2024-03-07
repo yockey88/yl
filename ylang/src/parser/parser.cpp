@@ -271,12 +271,8 @@ namespace ylang {
 
         Token field = Consume(TokenType::IDENTIFIER , "Expected identifier for struct field");
 
-        if (Match({ TokenType::SEMICOLON })) {
-          fields.push_back(new VarDeclStmt(field , nullptr));
-          continue;
-        }
-
         Consume(TokenType::COLON , "Expected colon after struct field identifier");
+
         Token type = ConsumeType("Expected type for struct field");
 
         if (Match({ TokenType::SEMICOLON })) {
