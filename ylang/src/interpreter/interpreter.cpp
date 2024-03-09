@@ -607,9 +607,9 @@ namespace ylang {
   }
 
   void Executor::Visit(ReturnStmt& stmt) {
-    if (stmt.expr != nullptr) {
+    if (stmt.stmt != nullptr) {
       returning = true;
-      stmt.expr->Accept(*this);
+      stmt.stmt->Accept(*this);
       returning = false;
 
       if (!value_stack.empty()) {
@@ -769,35 +769,32 @@ namespace ylang {
     global_env = std::make_unique<Environment>();
     Executor emitter(this , global_env);
 
-    for (auto& stmt : ast.Nodes()) {
-      try {
-        stmt->Accept(emitter);
-      } catch (const Return& e) {
-        if (e.IsVoid()) {
-          return ExitCode::OK;
-        }
-
-        switch (e.Index()) {
-          case kValueIndex: printfmt("RET {}" , e.GetValue()); break;
-          case kCallableIndex: printfmt("RET Callable : {}" , e.GetCallable()->name); break;
-          case kVoidIndex: print("RET"); break;
-          default:
-            throw InternalError(fmtstr("Invalid return index : {}" , e.Index()));
-        }
-
+    try {
+        ast.root->Accept(emitter);
+    } catch (const Return& e) {
+      if (e.IsVoid()) {
         return ExitCode::OK;
-      } catch (const InterpreterError& e) {
-        printfmt("Error at statement : {}" , stmt->ToString());
-        printerr(INTERPRETER , e.what());
-        return ExitCode::ERROR;
-      } catch (const InternalError& e) {
-        std::string msg = "Interpreter Error : " + std::string{ e.what() };
-        printerr(INTERNAL , e.what());
-        return ExitCode::ERROR;
-      } catch (const std::exception& e) {
-        printerr(INTERNAL , e.what());
-        return ExitCode::ERROR;
       }
+
+      switch (e.Index()) {
+        case kValueIndex: printfmt("RET {}" , e.GetValue()); break;
+        case kCallableIndex: printfmt("RET Callable : {}" , e.GetCallable()->name); break;
+        case kVoidIndex: print("RET"); break;
+        default:
+          throw InternalError(fmtstr("Invalid return index : {}" , e.Index()));
+      }
+
+      return ExitCode::OK;
+    } catch (const InterpreterError& e) {
+      printerr(INTERPRETER , e.what());
+      return ExitCode::ERROR;
+    } catch (const InternalError& e) {
+      std::string msg = "Interpreter Error : " + std::string{ e.what() };
+      printerr(INTERNAL , e.what());
+      return ExitCode::ERROR;
+    } catch (const std::exception& e) {
+      printerr(INTERNAL , e.what());
+      return ExitCode::ERROR;
     }
 
     return ExitCode::OK;

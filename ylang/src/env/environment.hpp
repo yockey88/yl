@@ -86,7 +86,7 @@ namespace ylang {
       Scope* current_scope = nullptr;
       static Heap heap;
 
-      SymbolTable symbol_table;
+      SymbolTable symbol_table = SymbolTable("<YL-DYNAMIC-ENVIRONMENT>");
   };
  
   constexpr uint32_t kValueIndex = 0;

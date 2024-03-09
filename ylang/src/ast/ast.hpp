@@ -15,6 +15,8 @@ namespace ylang {
       inline bool IsValid() const { return valid; }
       std::vector<Stmt*>& Nodes();
 
+      Stmt* root = nullptr;
+
       void Validate();
 
       void Walk(TreeWalker& walker);

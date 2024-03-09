@@ -647,6 +647,95 @@ namespace ylang {
     return false;
   }
 
+  bool Value::TypesCompatible(Value::Type lhs , Value::Type rhs) {
+    return GetCommonType(lhs , rhs) != Type::VOID;
+  }
+      
+  Value::Type Value::GetType(const Token& token) {
+    switch (token.type) {
+      case INTEGER: {
+        return Value::Type::U32;
+      }
+      case TokenType::SINTEGER: {
+        return Value::Type::I32;
+      }
+      case TokenType::I8:
+        return Value::Type::I8;
+      case TokenType::U8:
+        return Value::Type::U8;
+      case TokenType::I16:
+        return Value::Type::I16;
+      case TokenType::U16:
+        return Value::Type::U16;
+      case TokenType::I32:
+        return Value::Type::I32;
+      case TokenType::U32:
+        return Value::Type::U32;
+      case TokenType::I64:
+        return Value::Type::I64;
+      case TokenType::U64:
+        return Value::Type::U64;
+      case TokenType::F32:
+        return Value::Type::F32;
+      case TokenType::F64:
+        return Value::Type::F64;
+      case TokenType::CHAR:
+        return Value::Type::CHAR;
+      case TokenType::BOOL:
+        return Value::Type::BOOL;
+      case TokenType::ADDRESS:
+        return Value::Type::ADDRESS;
+      case TokenType::STRING:
+        return Value::Type::STRING;
+      case TokenType::IDENTIFIER:
+        return Value::Type::STRUCT;
+      case TokenType::UNKNOWN:
+        return Value::Type::VOID;
+      default:
+        return Value::Type::NIL;
+    }
+  }
+      
+  TokenType Value::GetTokenType(Value::Type type) {
+    switch (type) {
+      case Value::Type::I8:
+        return TokenType::I8;
+      case Value::Type::U8:
+        return TokenType::U8;
+      case Value::Type::I16:
+        return TokenType::I16;
+      case Value::Type::U16:
+        return TokenType::U16;
+      case Value::Type::I32:
+        return TokenType::I32;
+      case Value::Type::U32:
+        return TokenType::U32;
+      case Value::Type::I64:
+        return TokenType::I64;
+      case Value::Type::U64:
+        return TokenType::U64;
+      case Value::Type::F32:
+        return TokenType::F32;
+      case Value::Type::F64:
+        return TokenType::F64;
+      case Value::Type::CHAR:
+        return TokenType::CHAR;
+      case Value::Type::BOOL:
+        return TokenType::BOOL;
+      case Value::Type::CALLABLE:
+      case Value::Type::ADDRESS:
+        return TokenType::ADDRESS;
+      case Value::Type::STRING:
+        return TokenType::STRING;
+      case Value::Type::NIL:
+        return TokenType::NIL;
+      case Value::Type::VOID:
+        return TokenType::UNKNOWN;
+      default:
+        return TokenType::UNKNOWN;
+    }
+  }
+
   Value Value::CreateValue(const Token& token) {
     Value value;
     switch (token.type) {
@@ -797,6 +886,11 @@ namespace ylang {
         return value;
       }
 
+      case STRINGL: {
+        value.size = QWORD;
+        value.type = Type::STRING;
+        return value;
+      }
       case TokenType::ADDRESS: {
         value.size = QWORD;
         value.type = Type::ADDRESS;
@@ -813,7 +907,7 @@ namespace ylang {
       }
 
       default:
-        throw RuntimeError("Invalid token type");
+        throw RuntimeError(fmtstr("Invalid token type {} for {}" , TokenTypeStrings[token.type] , token.value));
     }
   }
       
@@ -849,6 +943,14 @@ namespace ylang {
     return v;
   }
 
+  Value Value::CreateNilValue(Value::Type type) {
+    Value v;
+    v.size = GetTypeWordSize(type);
+    v.type = type;
+    v.value = std::monostate{};
+    return v;
+  }
+
   size_t Value::GetTypeSize(Value::Type type) {
     switch (type) {
       case Type::BOOL:
@@ -874,6 +976,34 @@ namespace ylang {
 
       default:
         return 0;
+    }
+  }
+
+  WordSize Value::GetTypeWordSize(Value::Type type) {
+    switch (type) {
+      case Type::BOOL:
+      case Type::CHAR:
+      case Type::I8:
+      case Type::U8:
+        return BYTE;
+
+      case Type::I16:
+      case Type::U16:
+        return WORD;
+
+      case Type::I32:
+      case Type::U32:
+      case Type::F32:
+        return DWORD;
+
+      case Type::I64:
+      case Type::U64:
+      case Type::F64:
+      case Type::ADDRESS:
+        return QWORD;
+
+      default:
+        return UNKNOWN_SIZE;
     }
   }
 
@@ -919,6 +1049,96 @@ namespace ylang {
     }
 
     throw RuntimeError(fmtstr("No common type found {} and {}" , lhs , rhs));
+  }
+      
+  Value::Type Value::GetCommonType(Value::Type lhs , Value::Type rhs) {
+    switch (lhs) {
+      case BOOL:
+      case CHAR:
+        if (rhs != BOOL && rhs != CHAR && rhs != U8) {
+          return Type::VOID;
+        }
+        return lhs;
+
+      case I8:
+      case U8: {
+        if (rhs != I8 && rhs != I16 && rhs != I32 && rhs != I64 && 
+            rhs != U8 && rhs != U16 && rhs != U32 && rhs != U64) {
+          return Type::VOID;
+        }
+        if (rhs == U16 || rhs == U32 || rhs == U64 ||
+            rhs == I16 || rhs == I32 || rhs == I64) {
+          return rhs;
+        }
+        return lhs;
+      }
+
+      case I16:
+      case U16: {
+        if (rhs != I8 && rhs != I16 && rhs != I32 && rhs != I64 && 
+            rhs != U8 && rhs != U16 && rhs != U32 && rhs != U64) {
+          return Type::VOID;
+        }
+        if (rhs == U32 || rhs == U64 ||
+            rhs == I32 || rhs == I64) {
+          return rhs;
+        }
+        return lhs;
+      }
+
+      case I32:
+      case U32: {
+        if (rhs != I8 && rhs != I16 && rhs != I32 && rhs != I64 && 
+            rhs != U8 && rhs != U16 && rhs != U32 && rhs != U64) {
+          return Type::VOID;
+        }
+        if (rhs == U64 || rhs == I64) {
+          return rhs;
+        }
+        return lhs;
+      }
+
+      case I64: {
+        if (rhs != I8 && rhs != I16 && rhs != I32 && rhs != I64 &&
+            rhs != U8 && rhs != U16 && rhs != U32 && rhs != U64) {
+          return Type::VOID;
+        }
+        return lhs;
+      }
+
+      case U64: {
+        if (rhs != I8 && rhs != I16 && rhs != I32 && rhs != I64 && 
+            rhs != U8 && rhs != U16 && rhs != U32 && rhs != U64 && rhs != ADDRESS) {
+          return Type::VOID;
+        }
+        return lhs;
+      }
+
+      case F32:
+      case F64: {
+        if (rhs != F32 && rhs != F64 && 
+            rhs != I8 && rhs != I16 && rhs != I32 && rhs != I64 &&
+            rhs != U8 && rhs != U16 && rhs != U32 && rhs != U64) {
+          return Type::VOID;
+        }
+        return lhs;
+      }
+
+      case ARRAY:
+      case STRING: {
+        if (rhs != STRING && rhs != ARRAY && rhs != ADDRESS) {
+          return Type::VOID;
+        }
+        return lhs;
+      }
+      case ADDRESS:
+        if (rhs != ADDRESS && rhs != U64) {
+          return Type::VOID;
+        }
+        return lhs;
+      default:
+        return Type::VOID;
+    }
   }
       
   WordSize Value::ResolveSWordSize(int64_t size) {

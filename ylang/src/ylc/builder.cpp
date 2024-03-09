@@ -3,16 +3,19 @@
 #include "defines.hpp"
 #include "errors.hpp"
 #include "util/io.hpp"
-#include "ylc/file_handlers.hpp"  
 #include "preprocessor/preprocessor.hpp"
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
 #include "parser/resolver.hpp"
+#include "ylc/file_handlers.hpp"  
+#include "ylc/sym_extractor.hpp"
 
 namespace ylang {
 
   IntermediateRepresentation Builder::Build() {
     verbose = args.TestFlag(flags::VERBOSE);
+
+    ir.project_name = std::filesystem::path(build_file).stem().string();
 
     Reader reader(build_file);
     std::vector<std::string> lines = reader.GetSplit('\n');
@@ -108,20 +111,36 @@ namespace ylang {
 
     begin = std::chrono::steady_clock::now();
     Parse();
+    
+    if (failure) {
+      return IntermediateRepresentation();
+    }
 
     if (verbose) {
-      print(" -- ASTs");
       for (auto& ast : ir.asts) {
+        printfmt(" --- AST : {}", ast.name);
         if (ast.IsValid()) {
           ast.PrintTree();
         }
       }
     }
 
-    Resolve();
+    end = std::chrono::steady_clock::now();
+    elapsed = end - begin;
 
-    if (failure) {
-      printerr(ErrorType::STATIC_ANALYSIS, "Failed to resolve symbols");
+    if (verbose) {
+      print(" -- Finished parsing and resolving files");
+      printfmt(" -- Time taken : {}s", elapsed.count());
+    }
+
+    if (verbose) {
+      print(" -- Construction sym table");
+    }
+
+    begin = std::chrono::steady_clock::now();
+    ConstructTable();
+
+    if (failure || !ir.linked_table.has_value() || !ir.linked_table->Valid()) {
       return IntermediateRepresentation();
     }
 
@@ -129,16 +148,13 @@ namespace ylang {
     elapsed = end - begin;
 
     if (verbose) {
-      print(" -- Finished parsing files");
+      print(" -- Finished constructing symbol tables");
       printfmt(" -- Time taken : {}s", elapsed.count());
     }
 
-    if (failed_files.size() > 0) {
-      printerr(ErrorType::PARSER, "Failed to parse files");
-      for (auto& f : failed_files) {
-        printerr(ErrorType::PARSER, fmtstr("  {}", f));
-      }
-      return IntermediateRepresentation();
+    if (verbose) {
+      printfmt(" -- Symbol Table : {}" , ir.linked_table->AsmName());
+      ir.linked_table->Dump();
     }
 
     ir.valid = true;
@@ -241,10 +257,17 @@ namespace ylang {
       std::lock_guard<std::mutex> lock(parser_mutex);
       ir.asts.push_back(ast);
     };
+    
+    auto resolve_ast = [&](Ast& ast) {
+      Resolver resolver(ast);
+      if (!resolver.Resolve()) {
+        std::lock_guard<std::mutex> lock(parser_mutex);
+        failed_files.push_back(ast.name);
+      }
+    };
 
     std::vector<std::jthread> workers;
       
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     for (auto& tkns : tokens) {
       if (verbose) {
         printfmt(" -- Parsing file : {}", tkns.src_name);
@@ -255,21 +278,99 @@ namespace ylang {
     for (auto& w : workers) {
       w.join();
     }
-
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end - start;
+    
+    if (failed_files.size() > 0) {
+      failure = true;
+      printerr(ErrorType::PARSER, "Failed to parse files");
+      for (auto& f : failed_files) {
+        printerr(ErrorType::PARSER, fmtstr("  {}", f));
+      }
+      return;
+    }
 
     if (verbose) {
-      printfmt(" -- Parsing took {} seconds", elapsed_seconds.count());
+      print(" -- Resolving symbols");
+    }
+
+    workers.clear();
+
+    for (auto& ast : ir.asts) {
+      workers.emplace_back(resolve_ast, std::ref(ast));
+    }
+
+    for (auto& w : workers) {
+      w.join();
+    }
+
+    if (failed_files.size() > 0) {
+      failure = true;
+      printerr(ErrorType::STATIC_ANALYSIS, "Failed to resolve symbols");
+      for (auto& f : failed_files) {
+        printerr(ErrorType::STATIC_ANALYSIS, fmtstr("  {}", f));
+      }
+      return;
     }
   }
 
-  void Builder::Resolve() {
-    for (auto& ast : ir.asts) {
-      Resolver resolver(ast);
-      if (!resolver.Resolve()) {
-        failure = true;
+  void Builder::ConstructTable() {
+    auto construct_table = [&](Ast& ast) {
+      TableBuilder builder(ast);
+      SymbolTable table = builder.Build();
+
+      if (!table.Valid()) {
+        std::lock_guard<std::mutex> lock{ failed_files_mutex };
+        failed_files.push_back(ast.name);
+        return;
       }
+
+      ir.symbol_tables.push_back(table);
+    };
+
+    std::vector<std::jthread> workers;
+
+    for (auto& ast : ir.asts) {
+      if (verbose) {
+        printfmt(" -- Constructing symbol table for : {}", ast.name);
+      }
+
+      workers.emplace_back(construct_table, std::ref(ast));
+    }
+
+    for (auto& w : workers) {
+      w.join();
+    }
+
+    if (failed_files.size() > 0) {
+      failure = true;
+      printerr(ErrorType::COMPILER, "Failed to construct symbol tables");
+      for (auto& f : failed_files) {
+        printerr(ErrorType::COMPILER, fmtstr("  {}", f));
+      }
+      return;
+    }
+
+    if (verbose) {
+      print(" -- Linking symbol tables");
+    }
+
+    ir.linked_table = SymbolTable(ir.project_name);
+
+    std::string current_table = "";
+    try {
+      for (auto& table : ir.symbol_tables) {
+        current_table = table.AsmName();
+        if (verbose) {
+          printfmt(" --- Linking : {}", table.AsmName());
+        }
+        ir.linked_table->MergeTable(table);
+      }
+      ir.linked_table->Validate();
+    } catch (const std::exception& e) {
+      printerr(ErrorType::COMPILER , fmtstr("Failed to link symbol table for file '{}' to '{}'", 
+                                             current_table, ir.linked_table->AsmName()));
+      printerr(ErrorType::COMPILER, e.what());
+      failure = true;
+      return;
     }
   }
 

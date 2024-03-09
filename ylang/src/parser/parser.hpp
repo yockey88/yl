@@ -19,11 +19,13 @@ namespace ylang {
 
   enum CallableType {
     FUNCTION,
+    FUNCTION_OBJECT,
 
     NUM_CALLABLE_TYPES
   };
 
   struct ScopeDeclarations {
+    std::string scope_name;
     std::vector<Token> types;
     std::vector<Token> vars;
     std::vector<Token> funcs;
@@ -42,6 +44,8 @@ namespace ylang {
       TokenList tokens;
 
       size_t current = 0;
+        
+      uint32_t closure_counter = 0;
 
       constexpr static uint32_t kMaxScopeNesting = 100;
       std::array<ScopeDeclarations , kMaxScopeNesting> declarations;
@@ -101,6 +105,8 @@ namespace ylang {
       bool DeclaredType(const Token& type) const;
       bool DeclaredVar(const Token& var) const;
       bool DeclaredFunc(const Token& func) const;
+
+      std::string GenerateClosureName();
       
       void Sync();
       Stmt* RecoverFrom(TokenType type , std::vector<Stmt*>& stmts);

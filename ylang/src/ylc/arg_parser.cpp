@@ -25,7 +25,8 @@ namespace ylang {
 
   void ArgParser::ParseArgs(int argc, char *argv[]) {
     if (argc < 2) {
-      throw std::runtime_error("No arguments provided");
+      flags |= flags::HELP;
+      return;
     }
   
     for (int i = 0; i < argc; i++) {

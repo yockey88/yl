@@ -7,7 +7,6 @@
 #include <spdlog/fmt/fmt.h>
 
 #include "util/io.hpp"
-#include "ylc/file_handlers.hpp"
 #include "ylc/builder.hpp"
 
 namespace ylang {
@@ -31,7 +30,6 @@ constexpr std::string_view options =
     "-h, --help                           Print this help message\n"
     "-hm [feature-name], --help-more      Print more detailed help message\n"
     "-v, --version                        Print version information\n"
-    "-d, --debug                          Enable debug mode\n"
     "-V, --verbose                        Enable verbose mode\n"
     "\n"
     "[ File Compilation (--help-more file) ]\n"
@@ -109,7 +107,9 @@ constexpr std::string_view detailed_help =
     return ExitCode::OK;
   }
 
-  static ExitCode BuildProject(const Config& config , const ArgParser& args) {
+  typedef std::pair<ExitCode , IntermediateRepresentation> BuildResult;
+
+  static BuildResult BuildProject(const Config& config , const ArgParser& args) {
     bool verbose = args.TestFlag(flags::VERBOSE);
     if (verbose) {
       print(" -- Building project");
@@ -117,7 +117,7 @@ constexpr std::string_view detailed_help =
 
     if (!config.project_name.has_value()) {
       printerr(ErrorType::INVALID_ARGS, "No project name provided");
-      return ExitCode::ERROR;
+      return { ExitCode::ERROR , IntermediateRepresentation() };
     }
 
     std::string project_name = config.project_name.value();
@@ -127,7 +127,7 @@ constexpr std::string_view detailed_help =
     std::string build_file = directory + "/" + project_name + ".ylbld";
     if (!std::filesystem::exists(build_file)) {
       printerr(ErrorType::FILE_IO, fmtstr("Project at path {} does not exist" , build_file));
-      return ExitCode::ERROR;
+      return { ExitCode::ERROR , IntermediateRepresentation() };
     }
 
     if (verbose) {
@@ -136,7 +136,7 @@ constexpr std::string_view detailed_help =
 
     if (!std::filesystem::exists(build_file)) {
       printerr(ErrorType::FILE_IO, "Build file does not exist");
-      return ExitCode::ERROR;
+      return { ExitCode::ERROR , IntermediateRepresentation() };
     }
 
     if (verbose) {
@@ -148,7 +148,7 @@ constexpr std::string_view detailed_help =
 
     if (!ir.valid) {
       printerr(ErrorType::COMPILER, "Failed to build project");
-      return ExitCode::ERROR;
+      return { ExitCode::ERROR , IntermediateRepresentation() };
     }
 
     if (verbose) {
@@ -157,7 +157,7 @@ constexpr std::string_view detailed_help =
 
     print("=== Project built successfully ===");
     
-    return ExitCode::OK;
+    return { ExitCode::OK , ir };
   }
 
 } // namespace <detail>
@@ -186,9 +186,12 @@ constexpr std::string_view detailed_help =
       case Mode::NEW_PROJECT: 
         exit = CreateProject(config , args);
       break;
-      case Mode::BUILD_PROJ:
-        exit = BuildProject(config , args);
-      break;
+      case Mode::BUILD_PROJ: {
+        auto [exit , ir] = BuildProject(config , args);
+        if (exit == ExitCode::ERROR) {
+          break;
+        }
+      } break;
       case Mode::RUN:
         throw std::runtime_error("run command not implemented");
         break;
@@ -199,8 +202,9 @@ constexpr std::string_view detailed_help =
     }
 
     switch (exit) {
-      case ExitCode::OK:
       case ExitCode::ERROR:
+        printerr(ErrorType::COMPILER, "Failed to build project");
+      case ExitCode::OK:
         return exit;
       default:
         throw std::runtime_error("Unknown Error");

@@ -8,6 +8,7 @@
 #include "preprocessor/preprocessor.hpp"
 #include "lexer/lexer.hpp"
 #include "ast/ast.hpp"
+#include "env/symbol_table.hpp"
 #include "ylc/arg_parser.hpp"
 #include "ylc/dependency_graph.hpp"
 
@@ -15,9 +16,13 @@ namespace ylang {
 
   struct IntermediateRepresentation {
     bool valid = false;
+    std::string project_name;
 
     DependencyGraph graph;
     std::vector<Ast> asts{};
+    std::vector<SymbolTable> symbol_tables{};
+
+    std::optional<SymbolTable> linked_table;
   };
 
   class Builder {
@@ -48,6 +53,8 @@ namespace ylang {
       std::vector<TokenList> tokens{};
     
       std::mutex parser_mutex;
+
+      std::mutex build_mutex;
     
       std::mutex failed_files_mutex;
       std::vector<std::string> failed_files{};
@@ -57,7 +64,7 @@ namespace ylang {
       void Process();
       void Tokenize();
       void Parse();
-      void Resolve();
+      void ConstructTable();
   };
 
 } // namespace ylang
