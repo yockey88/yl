@@ -64,7 +64,6 @@ namespace ylang {
       void Process();
       void Tokenize();
       void Parse();
-      void ConstructTable();
   };
 
 } // namespace ylang

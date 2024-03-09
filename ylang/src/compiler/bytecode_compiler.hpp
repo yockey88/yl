@@ -1,11 +1,7 @@
 #ifndef YL_BYTECODE_COMPILER_HPP
 #define YL_BYTECODE_COMPILER_HPP
 
-#include <stack>
-
 #include "tree_walker.hpp"  
-#include "token.hpp"
-#include "ast/ast.hpp"
 #include "compiler/assembly.hpp"
 
 namespace ylang {
@@ -14,8 +10,8 @@ namespace ylang {
 
   class OpEmitter : public TreeWalker {
     public:
-      OpEmitter(BytecodeCompiler* compiler) 
-        : compiler(compiler) {}
+      OpEmitter(const SymbolTable* table) 
+        : table(table) {}
       ~OpEmitter() {}
 
       void Visit(LiteralExpr& expr) override;
@@ -43,54 +39,21 @@ namespace ylang {
     private:
       friend class BytecodeCompiler;
 
-      BytecodeCompiler* compiler;
-
-      std::stack<address_t> addr_stack;
-      std::stack<Token> token_stack;
-      std::stack<Value> value_stack;
-      std::stack<Operand> operand_stack;
-
-      address_t cursor{ 0 };
-      address_t stack_cursor{ 0 }; 
-
-      bool in_var_decl{ false }; 
-      bool return_stmt{ false };
-      const std::string* current_var_name{ nullptr };
-
-      void EmitOp(InstructionType type);
-
-      void EmitUnaryOp(InstructionType type , Expr* expr);
-      void EmitBinaryOp(InstructionType type , Expr* lhs , Expr* rhs);
+      const SymbolTable* table;
   }; 
 
   class BytecodeCompiler {
     public:
-      BytecodeCompiler(Ast ast) 
-        : ast(ast) {}
+      BytecodeCompiler(const SymbolTable& table) 
+        : table(table) {}
       ~BytecodeCompiler() {}
 
       Assembly Compile();
 
-      Assembly& GetAssembly() { return assembly; }
-
-      address_t stack_cursor{ 0 };
-
-      address_t WriteVariable(Token name , Value value);
-      address_t AccessVariable(Token name);
-      RegisterType WriteRegister();
-
     private:
       friend class OpEmitter;
 
-      Ast ast;
-
-      Chunk* current_chunk;
-      Assembly assembly;
-      std::stack<Variable> scope_stack;
-
-      uint8_t current_register = RegisterType::R12;
-
-      void EmitInstruction(Instruction type);
+      const SymbolTable& table;
   };
 
 } // namespace ylang

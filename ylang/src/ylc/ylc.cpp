@@ -7,6 +7,8 @@
 #include <spdlog/fmt/fmt.h>
 
 #include "util/io.hpp"
+#include "compiler/assembly.hpp"
+#include "compiler/bytecode_compiler.hpp"
 #include "ylc/builder.hpp"
 
 namespace ylang {
@@ -160,6 +162,15 @@ constexpr std::string_view detailed_help =
     return { ExitCode::OK , ir };
   }
 
+  typedef std::pair<ExitCode , Assembly> CompileResult;
+
+  static CompileResult Compile(const IntermediateRepresentation& ir) {
+    print(" -- Compiling intermediate representation");
+    BytecodeCompiler compiler(ir.linked_table.value());
+
+    return { ExitCode::OK , Assembly() };
+  }
+
 } // namespace <detail>
 
   ExitCode YLC::Main(int argc, char *argv[]) {
@@ -187,7 +198,16 @@ constexpr std::string_view detailed_help =
         exit = CreateProject(config , args);
       break;
       case Mode::BUILD_PROJ: {
-        auto [exit , ir] = BuildProject(config , args);
+        auto [ex , ir] = BuildProject(config , args);
+        exit = ex;
+
+        if (exit == ExitCode::ERROR) {
+          break;
+        }
+
+        auto [ex2 , assm] = Compile(ir);
+        exit = ex2;
+
         if (exit == ExitCode::ERROR) {
           break;
         }

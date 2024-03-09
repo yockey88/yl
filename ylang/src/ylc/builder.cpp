@@ -116,39 +116,11 @@ namespace ylang {
       return IntermediateRepresentation();
     }
 
-    if (verbose) {
-      for (auto& ast : ir.asts) {
-        printfmt(" --- AST : {}", ast.name);
-        if (ast.IsValid()) {
-          ast.PrintTree();
-        }
-      }
-    }
-
     end = std::chrono::steady_clock::now();
     elapsed = end - begin;
 
     if (verbose) {
       print(" -- Finished parsing and resolving files");
-      printfmt(" -- Time taken : {}s", elapsed.count());
-    }
-
-    if (verbose) {
-      print(" -- Construction sym table");
-    }
-
-    begin = std::chrono::steady_clock::now();
-    ConstructTable();
-
-    if (failure || !ir.linked_table.has_value() || !ir.linked_table->Valid()) {
-      return IntermediateRepresentation();
-    }
-
-    end = std::chrono::steady_clock::now();
-    elapsed = end - begin;
-
-    if (verbose) {
-      print(" -- Finished constructing symbol tables");
       printfmt(" -- Time taken : {}s", elapsed.count());
     }
 
@@ -244,6 +216,27 @@ namespace ylang {
   }
 
   void Builder::Parse() {
+    auto construct_table = [&](Ast& ast) {
+      TableBuilder builder(ast);
+      SymbolTable table = builder.Build();
+
+      if (!table.Valid()) {
+        std::lock_guard<std::mutex> lock{ failed_files_mutex };
+        failed_files.push_back(ast.name);
+        return;
+      }
+
+      ir.symbol_tables.push_back(table);
+    };
+
+    auto resolve_ast = [&](Ast& ast) {
+      Resolver resolver(ast);
+      if (!resolver.Resolve()) {
+        std::lock_guard<std::mutex> lock(parser_mutex);
+        failed_files.push_back(ast.name);
+      }
+    };
+
     auto parse_file = [&](const TokenList& tkns) {
       Parser parser(tkns);
       Ast ast = parser.Parse();
@@ -254,18 +247,19 @@ namespace ylang {
         return;
       }
 
-      std::lock_guard<std::mutex> lock(parser_mutex);
-      ir.asts.push_back(ast);
-    };
-    
-    auto resolve_ast = [&](Ast& ast) {
-      Resolver resolver(ast);
-      if (!resolver.Resolve()) {
-        std::lock_guard<std::mutex> lock(parser_mutex);
-        failed_files.push_back(ast.name);
+      resolve_ast(ast);
+
+      if (failed_files.size() > 0) {
+        return;
+      }
+
+      construct_table(ast);
+
+      if (failed_files.size() > 0) {
+        return;
       }
     };
-
+    
     std::vector<std::jthread> workers;
       
     for (auto& tkns : tokens) {
@@ -286,71 +280,6 @@ namespace ylang {
         printerr(ErrorType::PARSER, fmtstr("  {}", f));
       }
       return;
-    }
-
-    if (verbose) {
-      print(" -- Resolving symbols");
-    }
-
-    workers.clear();
-
-    for (auto& ast : ir.asts) {
-      workers.emplace_back(resolve_ast, std::ref(ast));
-    }
-
-    for (auto& w : workers) {
-      w.join();
-    }
-
-    if (failed_files.size() > 0) {
-      failure = true;
-      printerr(ErrorType::STATIC_ANALYSIS, "Failed to resolve symbols");
-      for (auto& f : failed_files) {
-        printerr(ErrorType::STATIC_ANALYSIS, fmtstr("  {}", f));
-      }
-      return;
-    }
-  }
-
-  void Builder::ConstructTable() {
-    auto construct_table = [&](Ast& ast) {
-      TableBuilder builder(ast);
-      SymbolTable table = builder.Build();
-
-      if (!table.Valid()) {
-        std::lock_guard<std::mutex> lock{ failed_files_mutex };
-        failed_files.push_back(ast.name);
-        return;
-      }
-
-      ir.symbol_tables.push_back(table);
-    };
-
-    std::vector<std::jthread> workers;
-
-    for (auto& ast : ir.asts) {
-      if (verbose) {
-        printfmt(" -- Constructing symbol table for : {}", ast.name);
-      }
-
-      workers.emplace_back(construct_table, std::ref(ast));
-    }
-
-    for (auto& w : workers) {
-      w.join();
-    }
-
-    if (failed_files.size() > 0) {
-      failure = true;
-      printerr(ErrorType::COMPILER, "Failed to construct symbol tables");
-      for (auto& f : failed_files) {
-        printerr(ErrorType::COMPILER, fmtstr("  {}", f));
-      }
-      return;
-    }
-
-    if (verbose) {
-      print(" -- Linking symbol tables");
     }
 
     ir.linked_table = SymbolTable(ir.project_name);
