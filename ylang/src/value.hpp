@@ -54,9 +54,10 @@ namespace ylang {
         STRING ,
         ARRAY ,
         STRUCT ,
-        NIL ,
+        NIL , VOID ,
+        CALLABLE ,
 
-        COUNT = NIL + 1
+        COUNT
       } type = NIL;
       WordSize size = QWORD;
       ValueData value = std::monostate{};
@@ -115,6 +116,9 @@ namespace ylang {
       bool IsArray() const;
       bool TypesCompatible(const Value& rhs) const;
 
+      static bool TypesCompatible(Value::Type lhs , Value::Type rhs);
+      static Value::Type GetType(const Token& token);
+      static TokenType GetTokenType(Value::Type type);
       static Value CreateValue(const Token& token);
       static Value CreateValue(bool val);
       static Value CreateValue(char val);
@@ -122,6 +126,7 @@ namespace ylang {
       static Value CreateValue(RegisterType reg);
 
       static size_t GetTypeSize(Value::Type type);
+      static Value::Type GetCommonType(Value::Type lhs , Value::Type rhs);
       static Value::Type GetCommonType(const Value& lhs , const Value& rhs);
       static WordSize ResolveSWordSize(int64_t size);
       static WordSize ResolveUWordSize(uint64_t size);
@@ -158,7 +163,7 @@ namespace ylang {
   Value operator*(const Value& lhs , const Value& rhs);
   Value operator/(const Value& lhs , const Value& rhs);
 
-  constexpr static uint32_t kNumPrimitiveTypes = Value::Type::NIL + 1;
+  constexpr static uint32_t kNumPrimitiveTypes = Value::Type::COUNT;
   constexpr std::array<std::string_view , kNumPrimitiveTypes> kValueStrings = {
     "bool" , "char" ,
     "int8" , "int16" , "int32" , "int64" , 
@@ -166,7 +171,8 @@ namespace ylang {
     "float" , "double" , 
     "address" , "register" , "string" , "array" ,
     "struct" , 
-    "nil"
+    "nil" , "void" ,
+    "callable"
   };
 
 } // namespace ylang

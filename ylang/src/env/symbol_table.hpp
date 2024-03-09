@@ -10,6 +10,7 @@ namespace ylang {
 
   enum class SymbolType {
     STRUCT,
+    FUNCTION,
   };
 
   struct Field {
@@ -21,6 +22,13 @@ namespace ylang {
     std::vector<Value> initial_values{ Value() };
   };
 
+  struct Parameter {
+    Value::Type type;
+    std::string name;
+    size_t size;
+    std::vector<Value> default_values;
+  };
+
   struct Symbol {
     std::string name;
     SymbolType type;
@@ -29,13 +37,31 @@ namespace ylang {
     std::vector<Field> fields;
   };
 
+  struct FunctionSymbol {
+    address_t address = 0x0;
+    std::string name;
+    Value::Type return_type;
+    std::vector<Parameter> parameters;
+    std::vector<Value> default_values;
+  };
+
+  struct DataSymbol {
+    address_t address;
+    size_t size;
+    std::string name;
+    Value::Type type;
+    std::vector<Value> values;
+  };
+
   class SymbolTable {
     public:
-      SymbolTable(bool compiling = false) 
-        : compiling(compiling) {}
+      SymbolTable(const std::string& asm_name)
+        : name(asm_name) {}
       ~SymbolTable() {}
 
       Symbol& DefineStruct(const std::string& name);
+      FunctionSymbol& DefineFunction(const std::string& name);
+      DataSymbol& DefineVariable(const std::string& name , const std::vector<Value>& initial_values);
 
       void AddField(const std::string& obj_name , const std::string& name , 
                     const std::vector<Value>& initial_values);
@@ -54,6 +80,8 @@ namespace ylang {
       Value::Type StringToType(const std::string& type) const;
       size_t TypeSize(Value::Type type) const;
       size_t FieldSize(Symbol& sym , const std::string& field_name) const;
+
+      const std::string& AsmName() const { return name; }
 
       typedef std::tuple<uint64_t , std::string_view , Value::Type> TypeHash;
 
@@ -77,13 +105,18 @@ namespace ylang {
         /// there is no array , address , or register keyword so this is here as a placeholder
         TypeHash{ FNV("array") , "array" , Value::Type::ARRAY } ,
         TypeHash{ FNV("struct") , "struct" , Value::Type::STRUCT } ,
-        TypeHash{ FNV("nil") , "nil" , Value::Type::NIL }
+        TypeHash{ FNV("nil") , "nil" , Value::Type::NIL } ,
+        TypeHash{ FNV("<anon-fn>") , "<anon-fn>" , Value::Type::CALLABLE }
       };
 
     private:
-      bool compiling;
+      std::string name;
       std::vector<Symbol> structs;
+      std::map<address_t , FunctionSymbol> functions;
+      std::map<address_t , DataSymbol> variables;
 
+      address_t data_address = 0x0;
+      address_t function_address = 0x0FFFFF;
 
       void ThrowError(const std::string& msg) const;
   };

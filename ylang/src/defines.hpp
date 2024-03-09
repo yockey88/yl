@@ -72,6 +72,7 @@ constexpr static uint64_t FORCE = 1 << 16;
 
     PRINT,
     IF , ELSE , WHILE , FOR ,
+    DEFN ,
     RETURN ,  
 
     STRUCT , 
@@ -270,6 +271,7 @@ constexpr static uint64_t FORCE = 1 << 16;
 
     "PRINT",
     "IF" , "ELSE" , "WHILE" , "FOR", 
+    "DEFN",
     "RETURN",
 
     "STRUCT",

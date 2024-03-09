@@ -16,9 +16,9 @@ namespace ylang {
 
   std::string VarDeclStmt::ToString() const {
     if (initializer) {
-      return fmtstr("var {} = {}", name.value , initializer->ToString());
+      return fmtstr("var {} : {} = {}", name.value , TokenTypeStrings[type.type] , initializer->ToString());
     }
-    return fmtstr("var {}", name.value);
+    return fmtstr("var {} : {}", name.value , TokenTypeStrings[type.type]);
   }
 
   void VarDeclStmt::Accept(TreeWalker& walker) {
@@ -114,10 +114,10 @@ namespace ylang {
   }
 
   std::string ReturnStmt::ToString() const {
-    if (expr == nullptr) {
+    if (stmt == nullptr) {
       return "return";
     }
-    return fmtstr("return {}" , expr->ToString());
+    return fmtstr("return {}" , stmt->ToString());
   }
 
   void ReturnStmt::Accept(TreeWalker& walker) {
@@ -130,10 +130,12 @@ namespace ylang {
   }
 
   std::string FunctionStmt::ToString() const {
-    std::string str = fmtstr("function {} (" , name.value);
+    std::string str = type.type == ADDRESS ? 
+      fmtstr("function {} : <{}>  = (" , name.value , type.value) : 
+      fmtstr("function {} : {}  = (" , name.value , TokenTypeStrings[type.type]);
 
     for (auto& param : params) {
-      str += fmtstr("{}" , param.value);
+      str += fmtstr("{} : {}" , param.value , TokenTypeStrings[param.type]);
       if (&param != &params.back()) {
         str += " , ";
       }
@@ -158,7 +160,7 @@ namespace ylang {
   }
 
   std::string StructStmt::ToString() const {
-    std::string str = fmtstr("struct {} {{\n" , name.value);
+    std::string str = fmtstr("struct {} {\n" , name.value);
     for (auto& field : fields) {
       str += fmtstr("  {}\n" , field->ToString());
     }

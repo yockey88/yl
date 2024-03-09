@@ -21,6 +21,50 @@ namespace ylang {
     return structs.back();
   }
 
+  FunctionSymbol& SymbolTable::DefineFunction(const std::string& name) {
+    for (const auto& [addr , f] : functions) {
+      if (f.name == name) {
+        ThrowError(fmtstr("Function '{}' already defined" , name));
+      }
+    }
+    
+    ++function_address.address;
+    functions[function_address.address] = FunctionSymbol {
+      .name = name,
+      .parameters = std::vector<Parameter>{},
+      .default_values = std::vector<Value>{}
+    };
+
+    return functions[function_address.address];
+  }
+
+  DataSymbol& SymbolTable::DefineVariable(const std::string& name , const std::vector<Value>& initial_values) {
+    for (const auto& [addr , d] : variables) {
+      if (d.name == name) {
+        ThrowError(fmtstr("Variable '{}' already defined" , name));
+      }
+    }
+
+    ++data_address.address;
+    variables[data_address.address] = DataSymbol {
+      .address = data_address.address,
+      .size = initial_values.size(),
+      .name = name,
+      .values = initial_values, 
+    };
+
+    if (initial_values.size() > 1) {
+      variables[data_address.address].type = Value::Type::ARRAY;
+      data_address.address += initial_values.size() - 1;
+    } else if (initial_values.size() == 1) {
+      variables[data_address.address].type = initial_values[0].type;
+    } else {
+      variables[data_address.address].type = Value::Type::NIL;
+    }
+
+    return variables[data_address.address];
+  }
+
   void SymbolTable::AddField(const std::string& obj_name , const std::string& field_name , const std::vector<Value>& initial_values) {
     for (auto& s : structs) {
       if (s.name == obj_name) {
@@ -40,7 +84,7 @@ namespace ylang {
     }
 
     Value::Type type = initial_values.size() > 1 ? 
-      Value::Type::ARRAY : initial_values[0].type;
+        Value::Type::ARRAY : initial_values[0].type;
 
     sym.fields.push_back(Field {
       .type = type,
@@ -97,16 +141,40 @@ namespace ylang {
       
   void SymbolTable::Dump() const {
     printfmt("========= Symbols ==========");
+    printfmt(".data");
+    for (const auto& [addr , d] : variables) {
+      if (d.values.size() == 1) {
+        printfmt("[{:#08x}]  {} {} : {} = {}" , addr.address , kValueStrings[d.type] , d.name , d.size , d.values[0]);
+      } else if (d.values.size() > 1) {
+        printfmt("[--------]   {} : {}" , kValueStrings[Value::Type::ARRAY] , d.name , d.size);
+        for (auto i = 0; i < d.values.size(); ++i) {
+          printfmt("[{:#08x}]  {}", addr.address + i, d.values[i]);
+        }
+      }
+    }
+
+    printfmt(".text");
+    for (const auto& [addr , f] : functions) {
+      printfmt("[{:#08x}]  {}" , addr.address , f.name);
+      for (auto i = 0; i < f.parameters.size(); ++i) {
+        const auto& p = f.parameters[i];
+        printfmt("@p{}__{}__({} : {})" , i, f.name, p.name , p.type);
+      }
+      printfmt("@ret({}__({}))" , f.name, kValueStrings[f.return_type]);
+    }
+
+    printfmt(".struct-layouts");
+
     for (const auto& s : structs) {
-      printfmt("[struct] '{}'" , s.name);
+      printfmt(".struct '{}'" , s.name);
       for (const auto& field : s.fields) {
-        std::string field_str = fmtstr("  Field '{}' Type '{}' Size '{}'" , 
-                                       field.name , field.type , field.size);
+        std::string field_str = fmtstr("  '{}::{}' '{}' [+{}]" , 
+                                       s.name , field.name , field.type , field.size);
         if (field.initial_values.size() == 1) {
-          field_str += fmtstr("  Initializer '{}'" , field.initial_values[0]);
+          field_str += fmtstr(" , '{}'" , field.initial_values[0]);
         } else {
           for (const auto& val : field.initial_values) {
-            field_str += fmtstr("\n  |-- Initializer '{}'" , val);
+            field_str += fmtstr(" , '{}'" , val);
           }
         }
 
@@ -179,11 +247,7 @@ namespace ylang {
   }
 
   void SymbolTable::ThrowError(const std::string& msg) const {
-    if (compiling) {
-      throw CompilerError(msg);
-    } else {
-      throw RuntimeError(msg);
-    }
+    throw CompilerError(msg);
   }
 
 }  // namespace ylang

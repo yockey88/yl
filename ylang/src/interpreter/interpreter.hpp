@@ -84,7 +84,7 @@ namespace ylang {
 
   class Interpreter {
     public:
-      Interpreter(Ast ast) 
+      Interpreter(const Ast& ast) 
         : ast(ast) {}
       ~Interpreter() {}
 

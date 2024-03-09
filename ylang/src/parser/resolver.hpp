@@ -9,10 +9,10 @@
 #include "ast/ast.hpp"
 
 namespace ylang {
-  
+ 
   class DeclarationResolver : public TreeWalker {
     public:
-      DeclarationResolver(const std::vector<Stmt*>& stmts) 
+      DeclarationResolver(const Ast& stmts) 
         : stmts(stmts) {}
       virtual ~DeclarationResolver() {}
 
@@ -43,14 +43,49 @@ namespace ylang {
       virtual void Visit(StructStmt& stmt) override final;
 
     private:
-      const std::vector<Stmt*>& stmts;
+      struct Variable {
+        std::string name;
+        Value::Type type;
+        bool defined = false;
+      };
+
+      struct Function {
+        std::string name;
+        Value::Type type;
+        bool defined = false;
+      };
+
+      struct Scope {
+        std::unordered_map<uint64_t , Variable> variables;
+        std::map<address_t , Function> declared_funcs;
+
+        address_t current_func = 0x0;
+
+        operator std::unordered_map<uint64_t , Variable>&() { return variables; }
+        Variable& operator[](uint64_t i) { return variables[i]; }
+
+        auto begin() { return variables.begin(); }
+        auto end() { return variables.end(); }
+        auto find(uint64_t i) { return variables.find(i); }
+        auto clear() { variables.clear(); }
+      };
+
+      const Ast& stmts;
+
+      bool need_identifier = false;
 
       std::stack<Token> token_stack;
+      std::stack<Value::Type> type_stack;
 
-      constexpr static uint32_t kMaxScopes = 100;
-      std::array<std::unordered_map<std::string , bool> , kMaxScopes> scopes;
+      constexpr static uint32_t kMaxScopeDepth = 100;
+      std::array<Scope , kMaxScopeDepth> scopes;
+      // std::array<std::unordered_map<std::string , bool> , kMaxScopeDepth> scopes;
 
-      int32_t current_scope = 0;
+      uint32_t current_scope = 0;
+
+      Variable CreateVar(const Token& name , const Token& type);
+      Value::Type GetDeclaredType(const Token& name);
+      void SetType(const Token& name , Value::Type type);
 
       void BeginScope();
       void EndScope();
@@ -61,9 +96,14 @@ namespace ylang {
 
       void ResolveLocal(Expr& expr , const Token& name);
       void ResolveFunction(FunctionStmt& stmt);
+      void ResolveType(const Token& name , const Token& type);
 
-      void Declare(const Token& name);
-      void Define(const Token& name);
+      void Declare(const Token& name , const Token& type);
+      void Define(const Token& name , const Token& type);
+      void DeclareFunction(const std::string& name , Value::Type type);
+      void DefineFunction(const std::string& name , Value::Type type);
+      bool IsFunction(const std::string& name);
+      Value::Type GetFunctionType(const std::string& name);
 
       void DumpScopes();
 

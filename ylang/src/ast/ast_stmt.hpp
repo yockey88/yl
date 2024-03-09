@@ -121,15 +121,15 @@ namespace ylang {
 
   class ReturnStmt : public Stmt {
     public:
-      ReturnStmt(Expr* expr = nullptr) 
-        : Stmt(NodeType::RETURN_STMT) , expr(expr) {}
-      virtual ~ReturnStmt() { delete expr; }
+      ReturnStmt(Stmt* expr = nullptr) 
+        : Stmt(NodeType::RETURN_STMT) , stmt(expr) {}
+      virtual ~ReturnStmt() { delete stmt; }
 
       virtual std::string ToString() const override;
       virtual void Accept(TreeWalker& walker) override;
       virtual std::vector<Instruction> Emit() override;
 
-      Expr* expr = nullptr;
+      Stmt* stmt = nullptr;
   };
 
   class FunctionStmt : public Stmt {

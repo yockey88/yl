@@ -35,6 +35,7 @@ namespace ylang {
     keywords[FNV("else")] = TokenType::ELSE;
     keywords[FNV("while")] = TokenType::WHILE;
     keywords[FNV("for")] = TokenType::FOR;
+    keywords[FNV("defn")] = TokenType::DEFN;
     keywords[FNV("return")] = TokenType::RETURN;
     keywords[FNV("struct")] = TokenType::STRUCT;
   }
