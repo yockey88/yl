@@ -15,11 +15,12 @@ TEST_F(parser_tests1 , literal_expr1) {
   ylang::Parser parser(tokens);
   auto ast = parser.Parse();
 
-  ASSERT_EQ(ast.Nodes().size() , 1);
+  ASSERT_EQ(ast.Nodes().size() , 2);
 
   auto nodes = ast.Nodes();
 
   ASSERT_EQ(nodes[0]->type , ylang::NodeType::EXPRESSION_STMT);
+  ASSERT_EQ(nodes[1]->type , ylang::NodeType::RETURN_STMT);
 
   ylang::ExprStmt* expr_stmt = reinterpret_cast<ylang::ExprStmt*>(nodes[0]);
 
