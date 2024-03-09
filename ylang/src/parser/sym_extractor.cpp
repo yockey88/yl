@@ -1,4 +1,4 @@
-#include "ylc/sym_extractor.hpp"
+#include "parser/sym_extractor.hpp"
 
 #include "errors.hpp"
 #include "ast/ast_expr.hpp"

@@ -7,8 +7,8 @@
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
 #include "parser/resolver.hpp"
+#include "parser/sym_extractor.hpp"
 #include "ylc/file_handlers.hpp"  
-#include "ylc/sym_extractor.hpp"
 
 namespace ylang {
 
