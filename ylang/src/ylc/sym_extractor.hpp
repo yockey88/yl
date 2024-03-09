@@ -47,6 +47,11 @@ namespace ylang {
       std::stack<std::string> identifier_stack;
       std::stack<std::string> scope_name_stack;
 
+      bool need_identifier = false;
+      bool struct_decl = false;
+      bool var_decl = false;
+      std::optional<std::string> current_func;
+
       std::string BuildScopeName(const std::string& name);
   }; 
 

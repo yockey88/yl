@@ -687,6 +687,8 @@ namespace ylang {
         return Value::Type::ADDRESS;
       case TokenType::STRING:
         return Value::Type::STRING;
+      case TokenType::IDENTIFIER:
+        return Value::Type::STRUCT;
       case TokenType::UNKNOWN:
         return Value::Type::VOID;
       default:
@@ -941,6 +943,14 @@ namespace ylang {
     return v;
   }
 
+  Value Value::CreateNilValue(Value::Type type) {
+    Value v;
+    v.size = GetTypeWordSize(type);
+    v.type = type;
+    v.value = std::monostate{};
+    return v;
+  }
+
   size_t Value::GetTypeSize(Value::Type type) {
     switch (type) {
       case Type::BOOL:
@@ -966,6 +976,34 @@ namespace ylang {
 
       default:
         return 0;
+    }
+  }
+
+  WordSize Value::GetTypeWordSize(Value::Type type) {
+    switch (type) {
+      case Type::BOOL:
+      case Type::CHAR:
+      case Type::I8:
+      case Type::U8:
+        return BYTE;
+
+      case Type::I16:
+      case Type::U16:
+        return WORD;
+
+      case Type::I32:
+      case Type::U32:
+      case Type::F32:
+        return DWORD;
+
+      case Type::I64:
+      case Type::U64:
+      case Type::F64:
+      case Type::ADDRESS:
+        return QWORD;
+
+      default:
+        return UNKNOWN_SIZE;
     }
   }
 

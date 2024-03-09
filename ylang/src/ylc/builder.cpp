@@ -15,6 +15,8 @@ namespace ylang {
   IntermediateRepresentation Builder::Build() {
     verbose = args.TestFlag(flags::VERBOSE);
 
+    ir.project_name = std::filesystem::path(build_file).stem().string();
+
     Reader reader(build_file);
     std::vector<std::string> lines = reader.GetSplit('\n');
 
@@ -138,15 +140,8 @@ namespace ylang {
     begin = std::chrono::steady_clock::now();
     ConstructTable();
 
-    if (failure) {
+    if (failure || !ir.linked_table.has_value() || !ir.linked_table->Valid()) {
       return IntermediateRepresentation();
-    }
-
-    if (verbose) {
-      for (auto& sym_table : ir.symbol_tables) {
-        printfmt(" --- TABLE : {}" , sym_table.AsmName());
-        sym_table.Dump();
-      }
     }
 
     end = std::chrono::steady_clock::now();
@@ -155,6 +150,11 @@ namespace ylang {
     if (verbose) {
       print(" -- Finished constructing symbol tables");
       printfmt(" -- Time taken : {}s", elapsed.count());
+    }
+
+    if (verbose) {
+      printfmt(" -- Symbol Table : {}" , ir.linked_table->AsmName());
+      ir.linked_table->Dump();
     }
 
     ir.valid = true;
@@ -268,7 +268,6 @@ namespace ylang {
 
     std::vector<std::jthread> workers;
       
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     for (auto& tkns : tokens) {
       if (verbose) {
         printfmt(" -- Parsing file : {}", tkns.src_name);
@@ -311,19 +310,19 @@ namespace ylang {
       }
       return;
     }
-
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end - start;
-
-    if (verbose) {
-      printfmt(" -- Parsing took {} seconds", elapsed_seconds.count());
-    }
   }
 
   void Builder::ConstructTable() {
     auto construct_table = [&](Ast& ast) {
       TableBuilder builder(ast);
       SymbolTable table = builder.Build();
+
+      if (!table.Valid()) {
+        std::lock_guard<std::mutex> lock{ failed_files_mutex };
+        failed_files.push_back(ast.name);
+        return;
+      }
+
       ir.symbol_tables.push_back(table);
     };
 
@@ -333,6 +332,7 @@ namespace ylang {
       if (verbose) {
         printfmt(" -- Constructing symbol table for : {}", ast.name);
       }
+
       workers.emplace_back(construct_table, std::ref(ast));
     }
 
@@ -342,10 +342,34 @@ namespace ylang {
 
     if (failed_files.size() > 0) {
       failure = true;
-      printerr(ErrorType::STATIC_ANALYSIS, "Failed to construct symbol tables");
+      printerr(ErrorType::COMPILER, "Failed to construct symbol tables");
       for (auto& f : failed_files) {
-        printerr(ErrorType::STATIC_ANALYSIS, fmtstr("  {}", f));
+        printerr(ErrorType::COMPILER, fmtstr("  {}", f));
       }
+      return;
+    }
+
+    if (verbose) {
+      print(" -- Linking symbol tables");
+    }
+
+    ir.linked_table = SymbolTable(ir.project_name);
+
+    std::string current_table = "";
+    try {
+      for (auto& table : ir.symbol_tables) {
+        current_table = table.AsmName();
+        if (verbose) {
+          printfmt(" --- Linking : {}", table.AsmName());
+        }
+        ir.linked_table->MergeTable(table);
+      }
+      ir.linked_table->Validate();
+    } catch (const std::exception& e) {
+      printerr(ErrorType::COMPILER , fmtstr("Failed to link symbol table for file '{}' to '{}'", 
+                                             current_table, ir.linked_table->AsmName()));
+      printerr(ErrorType::COMPILER, e.what());
+      failure = true;
       return;
     }
   }

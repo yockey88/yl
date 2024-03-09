@@ -160,11 +160,12 @@ namespace ylang {
   }
 
   std::string StructStmt::ToString() const {
-    std::string str = fmtstr("struct {} {\n" , name.value);
+    std::string str = fmtstr("struct {} {{\n" , name.value);
     for (auto& field : fields) {
       str += fmtstr("  {}\n" , field->ToString());
     }
     str += "}";
+
     return str;
   }
 

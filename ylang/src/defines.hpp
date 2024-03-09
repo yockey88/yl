@@ -225,6 +225,7 @@ constexpr static uint64_t FORCE = 1 << 16;
     DWORD = 4,
     QWORD = 8 ,
     DQWORD = 16 ,
+    UNKNOWN_SIZE = 0,
 
     NUM_WORD_SIZES
   };

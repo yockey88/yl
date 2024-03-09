@@ -5,6 +5,26 @@
 
 namespace ylang {
 
+  void SymbolTable::MergeTable(const SymbolTable& other) {
+    for (const auto& [name , type , size , fields] : other.structs) {
+      Symbol& sym = DefineStruct(name);
+      for (const auto& f : fields) {
+        sym.fields.push_back(f);
+      }
+    }
+
+    for (const auto& [addr , func] : other.functions) {
+      FunctionSymbol& sym = DefineFunction(func.name);
+      sym.return_type = func.return_type;
+      sym.parameters = func.parameters;
+      sym.default_values = func.default_values;
+    }
+
+    for (const auto& [addr , data] : other.variables) {
+      DefineVariable(data.name , data.values);
+    }
+  }
+
   Symbol& SymbolTable::DefineStruct(const std::string& name) {
     for (const auto& s : structs) {
       if (s.name == name) {
@@ -55,7 +75,6 @@ namespace ylang {
 
     if (initial_values.size() > 1) {
       variables[data_address.address].type = Value::Type::ARRAY;
-      data_address.address += initial_values.size() - 1;
     } else if (initial_values.size() == 1) {
       variables[data_address.address].type = initial_values[0].type;
     } else {
@@ -65,7 +84,29 @@ namespace ylang {
     return variables[data_address.address];
   }
 
-  void SymbolTable::AddField(const std::string& obj_name , const std::string& field_name , const std::vector<Value>& initial_values) {
+  DataSymbol& SymbolTable::DefineString(const std::string& name , const std::string& value) {
+    for (const auto& [addr , d] : variables) {
+      if (d.name == name) {
+        ThrowError(fmtstr("Variable '{}' already defined" , name));
+      }
+    }
+
+    ++data_address.address;
+    variables[data_address.address] = DataSymbol {
+      .address = data_address.address,
+      .size = value.size(),
+      .name = name,
+      .type = Value::Type::STRING,
+    };
+
+    for (const auto& c : value) {
+      variables[data_address.address].values.push_back(Value::CreateValue((char)c));
+    }
+
+    return variables[data_address.address];
+  }
+
+  void SymbolTable::AddField(const std::string& obj_name , const std::string& field_name , std::vector<Value>& initial_values) {
     for (auto& s : structs) {
       if (s.name == obj_name) {
         AddField(s , field_name , initial_values);
@@ -76,7 +117,7 @@ namespace ylang {
     ThrowError(fmtstr("Struct '{}' not defined" , obj_name));
   }
       
-  void SymbolTable::AddField(Symbol& sym , const std::string& name , const std::vector<Value>& initial_values) {
+  void SymbolTable::AddField(Symbol& sym , const std::string& name , std::vector<Value>& initial_values) {
     for (const auto& field : sym.fields) {
       if (field.name == name) {
         ThrowError(fmtstr("Field '{}' already defined in struct '{}'" , name , sym.name));
@@ -102,6 +143,28 @@ namespace ylang {
     for (auto& s : structs) {
       if (s.name == name) {
         return &s;
+      }
+    }
+
+    return nullptr;
+  }
+
+  FunctionSymbol* SymbolTable::RetrieveFunction(const std::string& name) {
+    for (auto& [addr , f] : functions) {
+      std::string scopeless_name = f.name.substr(f.name.find_last_of(':') + 1);
+      if (scopeless_name == name) {
+        return &f;
+      }
+    }
+
+    return nullptr;
+  }
+
+  DataSymbol* SymbolTable::RetrieveVariable(const std::string& name) {
+    for (auto& [addr , d] : variables) {
+      std::string scopeless_name = d.name.substr(d.name.find_last_of(':') + 1);
+      if (scopeless_name == name) {
+        return &d;
       }
     }
 
@@ -143,41 +206,30 @@ namespace ylang {
     printfmt("========= Symbols ==========");
     printfmt(".data");
     for (const auto& [addr , d] : variables) {
-      if (d.values.size() == 1) {
-        printfmt("[{:#08x}]  {} {} : {} = {}" , addr.address , kValueStrings[d.type] , d.name , d.size , d.values[0]);
-      } else if (d.values.size() > 1) {
-        printfmt("[--------]   {} : {}" , kValueStrings[Value::Type::ARRAY] , d.name , d.size);
-        for (auto i = 0; i < d.values.size(); ++i) {
-          printfmt("[{:#08x}]  {}", addr.address + i, d.values[i]);
-        }
+      if (d.size == 0) {
+        printfmt("  [{:#08x}]  {} {}" , addr.address , kValueStrings[d.type] , d.name);
+        continue;
       }
+      printfmt("  [{:#08x}]  {} {} : {} = {}" , addr.address , kValueStrings[d.type] , d.name , d.size , d.values[0]);
     }
 
     printfmt(".text");
     for (const auto& [addr , f] : functions) {
-      printfmt("[{:#08x}]  {}" , addr.address , f.name);
+      printfmt("  [{:#08x}]  {}" , addr.address , f.name);
       for (auto i = 0; i < f.parameters.size(); ++i) {
         const auto& p = f.parameters[i];
-        printfmt("@p{}__{}__({} : {})" , i, f.name, p.name , p.type);
+        printfmt("    @p{}__{}__({} : {})" , i, f.name, p.name , p.type);
       }
-      printfmt("@ret({}__({}))" , f.name, kValueStrings[f.return_type]);
+      printfmt("    @ret({}__({}))" , f.name, kValueStrings[f.return_type]);
     }
 
     printfmt(".struct-layouts");
 
     for (const auto& s : structs) {
-      printfmt(".struct '{}'" , s.name);
+      printfmt("  .struct {}" , s.name);
       for (const auto& field : s.fields) {
-        std::string field_str = fmtstr("  '{}::{}' '{}' [+{}]" , 
+        std::string field_str = fmtstr("    {}::{} {} [{}]" , 
                                        s.name , field.name , field.type , field.size);
-        if (field.initial_values.size() == 1) {
-          field_str += fmtstr(" , '{}'" , field.initial_values[0]);
-        } else {
-          for (const auto& val : field.initial_values) {
-            field_str += fmtstr(" , '{}'" , val);
-          }
-        }
-
         printfmt(field_str);
       }
     }

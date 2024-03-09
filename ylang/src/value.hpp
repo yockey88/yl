@@ -124,8 +124,10 @@ namespace ylang {
       static Value CreateValue(char val);
       static Value CreateValue(const address_t& addr);
       static Value CreateValue(RegisterType reg);
+      static Value CreateNilValue(Value::Type type = NIL);
 
       static size_t GetTypeSize(Value::Type type);
+      static WordSize GetTypeWordSize(Value::Type type);
       static Value::Type GetCommonType(Value::Type lhs , Value::Type rhs);
       static Value::Type GetCommonType(const Value& lhs , const Value& rhs);
       static WordSize ResolveSWordSize(int64_t size);

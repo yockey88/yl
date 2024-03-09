@@ -104,12 +104,14 @@ namespace {
 
   class InternalError : public std::runtime_error {
     public:
-      InternalError(const std::string &message)
-          : std::runtime_error(message) {}
+      InternalError(const std::string &message , ErrorType type = ErrorType::INTERNAL)
+          : std::runtime_error(message) , type(type) {}
     
       const char *what() const noexcept override {
         return std::runtime_error::what();
       }
+      
+      ErrorType type;
   };
 
 } // namespace ylang

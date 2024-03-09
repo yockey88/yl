@@ -786,7 +786,7 @@ namespace ylang {
       case TokenType::F64:
         return Advance();
       default:
-        if (DeclaredType(Peek())) {
+        if (DeclaredType(Peek()) || Peek().type == TokenType::IDENTIFIER) {
           return Advance();
         }
         break;

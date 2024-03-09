@@ -1,4 +1,5 @@
 #ifndef YL_SYMBOL_TABLE_HPP
+
 #define YL_SYMBOL_TABLE_HPP
 
 #include <string>
@@ -59,16 +60,21 @@ namespace ylang {
         : name(asm_name) {}
       ~SymbolTable() {}
 
+      void MergeTable(const SymbolTable& other);
+
       Symbol& DefineStruct(const std::string& name);
       FunctionSymbol& DefineFunction(const std::string& name);
       DataSymbol& DefineVariable(const std::string& name , const std::vector<Value>& initial_values);
+      DataSymbol& DefineString(const std::string& name , const std::string& value);
 
       void AddField(const std::string& obj_name , const std::string& name , 
-                    const std::vector<Value>& initial_values);
+                    std::vector<Value>& initial_values);
       void AddField(Symbol& sym , const std::string& name , 
-                    const std::vector<Value>& initial_values);
+                    std::vector<Value>& initial_values);
 
       Symbol* RetrieveSymbol(const std::string& name);
+      FunctionSymbol* RetrieveFunction(const std::string& name);
+      DataSymbol* RetrieveVariable(const std::string& name);
       size_t CalculateSize(const std::string& name) const;
       size_t CalculateSize(const Symbol* sym) const;
 
@@ -81,6 +87,8 @@ namespace ylang {
       size_t TypeSize(Value::Type type) const;
       size_t FieldSize(Symbol& sym , const std::string& field_name) const;
 
+      void Validate() { valid = true; }
+      const bool Valid() const { return valid; }
       const std::string& AsmName() const { return name; }
 
       typedef std::tuple<uint64_t , std::string_view , Value::Type> TypeHash;
@@ -110,6 +118,7 @@ namespace ylang {
       };
 
     private:
+      bool valid = false;
       std::string name;
       std::vector<Symbol> structs;
       std::map<address_t , FunctionSymbol> functions;

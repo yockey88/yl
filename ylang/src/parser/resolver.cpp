@@ -151,10 +151,13 @@ namespace ylang {
       }
 
       Value::Type declared_type = stmt.initializer->GetType() == CALL_EXPR ? 
-          GetFunctionType(func_name.value) : GetDeclaredType(stmt.name);
+          GetFunctionType(func_name.value) : 
+          GetDeclaredType(stmt.name);
 
       Value::Type initializer_type_enum = type_stack.top();
       type_stack.pop();
+
+      stmt.type.type = Value::GetTokenType(declared_type);
 
       if (declared_type == Value::Type::VOID) {
         SetType(stmt.name , initializer_type_enum);
@@ -179,7 +182,6 @@ namespace ylang {
   }
 
   void DeclarationResolver::Visit(BlockStmt& stmt) {
-    printfmt("Resolving block statement");
     if (stmt.statements.empty()) {
       return;
     }
@@ -213,16 +215,16 @@ namespace ylang {
   }
 
   void DeclarationResolver::Visit(ReturnStmt& stmt) {
-    printfmt("Resolving return statement");
     if (stmt.stmt != nullptr) {
       Resolve(stmt.stmt);
       if (stmt.stmt->GetType() == NodeType::FUNCTION_STMT) {
-        printfmt("Return statement is a function");
         type_stack.pop();
         type_stack.push(Value::Type::CALLABLE);
       } 
     } else {
-      type_stack.pop();
+      while (!type_stack.empty()) {
+        type_stack.pop();
+      }
       type_stack.push(Value::Type::VOID);
     }
   }
@@ -242,8 +244,6 @@ namespace ylang {
       SetType(stmt.name , return_type);
       stmt.type = Token(stmt.type.loc , Value::GetTokenType(return_type) , stmt.type.value);
     }
-
-
   }
 
   void DeclarationResolver::Visit(StructStmt& stmt) {
@@ -264,6 +264,9 @@ namespace ylang {
     for (int i = current_scope; i >= 0; i--) {
       for (auto& [key , var] : scopes[i]) {
         if (key == name_hash) {
+          if (var.type == Value::Type::CALLABLE) {
+            return GetFunctionType(name.value);
+          }
           return var.type;
         }
       }
@@ -336,13 +339,6 @@ namespace ylang {
       Declare(param , param);
       Define(param , param);
     }
-
-    // if (type_stack.empty()) {
-    //   throw Error(Token() , "Type stack is empty in Function Declaration" , ErrorType::INTERNAL);
-    // }
-
-    // name.type = Token(name.type.loc , Value::GetTokenType(type_stack.top()) , name.type.value);
-    // type_stack.pop();
 
     Resolve(name.body);
     EndScope();
