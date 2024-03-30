@@ -98,6 +98,11 @@ while i < 10 {
 for i = 0; i < 10; i = i + 1 {
   print i;
 }
+
+j = 10;
+for (; j >= 0;) {
+  print j;
+}
 ```
 
 ### Structs
