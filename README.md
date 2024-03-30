@@ -13,6 +13,7 @@ main: u32 = (argc: u32 , argv: string[]) {
 > Run the interpreter
 ```bash
 ylc main.yl
+Hello World!
 ```
 
 ## Overview
@@ -58,7 +59,7 @@ c = 'c';
 c2: char = 'b';
 ```
 
-Y-Lang supports signed and unsigned integers if sizes 8, 16, 32, and 64 bytes and will be adding 128-bit integers in the future,
+Y-Lang supports signed and unsigned integers of sizes 8, 16, 32, and 64 bytes and will be adding 128-bit integers in the future,
 there are also floats and doubles (f32 and f64), strings and characters (string and char), and pointers will be added in the future as well
 
 ### Structs
@@ -74,7 +75,7 @@ struct Buffer {
 buff: Buffer;
 buff.data[5] = 1
 
-print buff; // [0,0,0,0,0,1,0,0,0,0]
+print buff; // struct { 10 , [0,0,0,0,0,1,0,0,0,0] }
 ```
 
 ### Functions
@@ -100,7 +101,7 @@ func printstr = (str: string) {
 }
 
 func main = (argc: u32 , argv: string[]) {
-  printstr(filename());
+  printstr(filename()); // main.yl
   return 0;
 }
 ```
