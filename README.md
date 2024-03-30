@@ -62,6 +62,44 @@ c2: char = 'b';
 Y-Lang supports signed and unsigned integers of sizes 8, 16, 32, and 64 bytes and will be adding 128-bit integers in the future,
 there are also floats and doubles (f32 and f64), strings and characters (string and char), and pointers will be added in the future as well
 
+### Control Flow
+
+Y-Lang supports if-else statements, while loops, and for loops
+
+```
+check = true
+
+if (check) {
+  print "Check Passed!";
+} else {
+  print "Check Failed!";
+}
+
+// parentheses are optional
+a: u8 = 4;
+if a < 3 {
+  print "Smaller than 3";
+} else {
+  print "Larger or equal to 3";
+}
+```
+
+```
+i = 0;
+
+/// parentheses are optional here too
+while i < 10 {
+  print i;
+  i = i + 1;
+}
+```
+
+```
+for i = 0; i < 10; i = i + 1 {
+  print i;
+}
+```
+
 ### Structs
 
 Custom types can be declared using the `struct` keyword.
