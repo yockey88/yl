@@ -130,6 +130,7 @@ print counter2(); // 2
 ## YLC
 <a name="ylc-section"></a>
 
+```
   -h,            --help,                prints help message
   -hm <command>, --help-more <command>, prints detailed help for the command passed to it
   -v,            --version,             prints the version
@@ -144,3 +145,4 @@ print counter2(); // 2
   new <name>,                           creates a new project in directory <name> 
   build <path>,                         builds the project in the current directory if <path> is not specified, otherwise attempts to build project at <path>
   run <path>,                           runs the project in the current directoy if <path> is not specified, otherwise attempts to run project at <path>
+```
