@@ -154,10 +154,12 @@ Y-Lang also supports closures
 ```
 func get_counter = {
   i = 0;
-  return {
+  counter = () {
     i = i + 1;
     return i;
   };
+
+  return counter;
 }
 
 counter = get_counter();
@@ -169,6 +171,18 @@ print counter2; // 0
 print counter(); // 2
 print counter2(); // 1
 print counter2(); // 2
+```
+
+> Scopes after the `return` keyword are implicitly returned as closures so the above example can be re-written as 
+
+```
+func get_counter = {
+  i = 0;
+  return {
+    i = i + 1;
+    return i;
+  };
+}
 ```
 
 ## YLC
