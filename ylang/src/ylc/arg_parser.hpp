@@ -31,7 +31,7 @@ namespace ylang {
   constexpr static uint32_t kNumArgs = 14;
   constexpr std::array<Argument, kNumArgs> kArguments = {
     Argument("-h", "--help", "Prints help message" , flags::HELP , false),
-    Argument("--hm", "--help-more", "Prints more detailed help message" , flags::HELP_MORE , true),
+    Argument("-hm", "--help-more", "Prints more detailed help message" , flags::HELP_MORE , true),
     Argument("-v", "--version", "Prints version information" , flags::VERSION , false),
     Argument("-d", "--debug", "Prints debug information" , flags::DEBUG , false),
     Argument("-V", "--verbose", "Prints verbose information" , flags::VERBOSE , false),
