@@ -80,7 +80,7 @@ namespace ylang {
 
       void Dump() const;
 
-      static std::unique_ptr<Environment> CreateClosure(std::unique_ptr<Environment>& parent);
+      std::unique_ptr<Environment> CreateClosure();
 
     private:
       Scope* current_scope = nullptr;

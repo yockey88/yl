@@ -7,8 +7,8 @@
 #include "tree_walker.hpp"
 #include "ast/ast_expr.hpp"
 #include "ast/ast_stmt.hpp"
-#include "ast/ast.hpp"
 #include "env/environment.hpp"
+#include "compiler/intermediate_representation.hpp"
 
 namespace ylang {
 
@@ -20,7 +20,10 @@ namespace ylang {
       virtual ~Function() override {}
 
       virtual ReturnValue Call(Interpreter* interpreter , const std::vector<Value>& args) override final;
-      virtual Callable* Clone() override final { return new Function(stmt , env); }
+      virtual Callable* Clone() override final { 
+        auto closure = env->CreateClosure();
+        return new Function(stmt, closure);
+      }
 
     private:
       FunctionStmt& stmt;
@@ -84,8 +87,8 @@ namespace ylang {
 
   class Interpreter {
     public:
-      Interpreter(const Ast& ast) 
-        : ast(ast) {}
+      Interpreter(const IntermediateRepresentation& interpretable) 
+        : interpretable(interpretable) {}
       ~Interpreter() {}
 
       ExitCode Interpret();
@@ -97,7 +100,8 @@ namespace ylang {
       std::string& TopCall() { return call_stack.top(); }
 
     private:
-      Ast ast;
+      IntermediateRepresentation interpretable;
+
       std::unique_ptr<Environment> global_env = std::make_unique<Environment>();
 
       std::stack<std::string> call_stack;

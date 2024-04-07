@@ -25,9 +25,9 @@ namespace ylang {
       std::vector<Chunk> chunks;
 
       std::unique_ptr<Environment> Env() { 
-        std::unique_ptr<Environment> ret = std::move(env);
-        env = nullptr;
-        return ret; 
+        // std::unique_ptr<Environment> ret = env;
+        // return ret; 
+        return nullptr;
       }
 
       std::unique_ptr<Environment>& GetEnv() { return env; }

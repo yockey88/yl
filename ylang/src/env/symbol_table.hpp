@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "value.hpp"
+#include "ast/ast_stmt.hpp"
 
 namespace ylang {
 
@@ -44,6 +45,7 @@ namespace ylang {
     Value::Type return_type;
     std::vector<Parameter> parameters;
     std::vector<Value> default_values;
+    Stmt* body;
   };
 
   struct DataSymbol {

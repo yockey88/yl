@@ -7,9 +7,8 @@
 #include <spdlog/fmt/fmt.h>
 
 #include "util/io.hpp"
-#include "compiler/assembly.hpp"
 #include "compiler/bytecode_compiler.hpp"
-#include "ylc/builder.hpp"
+#include "interpreter/interpreter.hpp"
 
 namespace ylang {
 
@@ -43,7 +42,7 @@ constexpr std::string_view options =
     "                   -d, --directory   Project directory\n"
     "                   -f, --force       Overwrite existing project\n"
     "build [project-name] [options]       Build project\n"
-    "run [project-name] [options]         Run project\n"
+    "run [project-name] [-i | --interpret] [options]    Run project\n"
     "\n";
 
 constexpr std::string_view detailed_help = 
@@ -54,122 +53,6 @@ constexpr std::string_view detailed_help =
 
 } // namespace help
   
-  static ExitCode CreateProject(const Config& config , const ArgParser& args) {
-    if (!config.project_name.has_value()) {
-      printerr(ErrorType::INVALID_ARGS , "No project name provided");
-      return ExitCode::ERROR;
-    }
-
-    bool verbose = args.TestFlag(flags::VERBOSE);
-    if (verbose) {
-      printfmt(" -- Creating project : {}", config.project_name.value());
-    }
-
-    std::string project_name = config.project_name.value();
-    std::string proj_dir = args.TestFlag(flags::DIRECTORY) ? 
-      args.GetArgs(flags::DIRECTORY).front() : project_name;
-
-    if (verbose) {
-      printfmt(" -- Project configuration : {}/{}", proj_dir, project_name);
-    }
-
-    if (std::filesystem::exists(proj_dir)) {
-      if (verbose) {
-        print(" -- Project already exists");
-      }
-
-      if (args.TestFlag(flags::FORCE)) {
-        if (verbose) {
-          print(" -- Forcing project creation");
-        }
-        std::filesystem::remove_all(proj_dir);
-      } else {
-        printerr(ErrorType::FILE_IO, "Project already exists");
-        return ExitCode::ERROR;
-      }
-    }
-
-    if (verbose) {
-      printfmt(" -- Creating project directory : {}", proj_dir);
-      printfmt(" -- Creating project source directory : {}", proj_dir + "/src");
-    }
-    std::filesystem::create_directory(proj_dir);
-    std::filesystem::create_directory(proj_dir + "/src");
-
-    if (verbose) {
-      print(" -- Creating build file");
-    }
-    std::ofstream build_file(proj_dir + "/" + project_name  + ".ylbld");
-    if (!build_file.is_open()) {
-      printerr(ErrorType::FILE_IO, "Failed to create build file");
-      return ExitCode::ERROR;
-    }
-
-
-    return ExitCode::OK;
-  }
-
-  typedef std::pair<ExitCode , IntermediateRepresentation> BuildResult;
-
-  static BuildResult BuildProject(const Config& config , const ArgParser& args) {
-    bool verbose = args.TestFlag(flags::VERBOSE);
-    if (verbose) {
-      print(" -- Building project");
-    }
-
-    if (!config.project_name.has_value()) {
-      printerr(ErrorType::INVALID_ARGS, "No project name provided");
-      return { ExitCode::ERROR , IntermediateRepresentation() };
-    }
-
-    std::string project_name = config.project_name.value();
-    std::string directory = args.TestFlag(flags::DIRECTORY) ? 
-      args.GetArgs(flags::DIRECTORY).front() : project_name;
-
-    std::string build_file = directory + "/" + project_name + ".ylbld";
-    if (!std::filesystem::exists(build_file)) {
-      printerr(ErrorType::FILE_IO, fmtstr("Project at path {} does not exist" , build_file));
-      return { ExitCode::ERROR , IntermediateRepresentation() };
-    }
-
-    if (verbose) {
-      printfmt(" -- Build file : {}", build_file);
-    }
-
-    if (!std::filesystem::exists(build_file)) {
-      printerr(ErrorType::FILE_IO, "Build file does not exist");
-      return { ExitCode::ERROR , IntermediateRepresentation() };
-    }
-
-    if (verbose) {
-      print(" -- Building project");
-    }
-
-    Builder builder(args , directory , build_file);
-    auto ir = builder.Build();
-
-    if (!ir.valid) {
-      printerr(ErrorType::COMPILER, "Failed to build project");
-      return { ExitCode::ERROR , IntermediateRepresentation() };
-    }
-
-    if (verbose) {
-      print(" -- Intermediate Representation constructed");
-    }
-
-    print("=== Project built successfully ===");
-    
-    return { ExitCode::OK , ir };
-  }
-
-  typedef std::pair<ExitCode , Assembly> CompileResult;
-
-  static CompileResult Compile(const IntermediateRepresentation& ir) {
-    print(" -- Compiling intermediate representation");
-    BytecodeCompiler compiler(ir.linked_table.value());
-
-    return { ExitCode::OK , Assembly() };
-  }
 
 } // namespace <detail>
 
@@ -212,9 +95,16 @@ constexpr std::string_view detailed_help =
           break;
         }
       } break;
-      case Mode::RUN:
-        throw std::runtime_error("run command not implemented");
-        break;
+      case Mode::RUN: {
+        auto [ex , ir] = BuildProject(config , args);
+        exit = ex;
+
+        if (exit == ExitCode::ERROR) {
+          break;
+        }
+
+        exit = Run(ir);
+      } break;
       case Mode::ERR:
         printerr(ErrorType::INVALID_ARGS, "Invalid arguments");
       default:
@@ -316,6 +206,134 @@ constexpr std::string_view detailed_help =
   void YLC::PrintVersion() {
     printfmt(version::kVersionFmtStr, version::MAJOR, version::MINOR,
              version::PATCH);
+  }
+
+  ExitCode YLC::CreateProject(const Config& config , const ArgParser& args) {
+    if (!config.project_name.has_value()) {
+      printerr(ErrorType::INVALID_ARGS , "No project name provided");
+      return ExitCode::ERROR;
+    }
+
+    bool verbose = args.TestFlag(flags::VERBOSE);
+    if (verbose) {
+      printfmt(" -- Creating project : {}", config.project_name.value());
+    }
+
+    std::string project_name = config.project_name.value();
+    std::string proj_dir = args.TestFlag(flags::DIRECTORY) ? 
+      args.GetArgs(flags::DIRECTORY).front() : project_name;
+
+    if (verbose) {
+      printfmt(" -- Project configuration : {}/{}", proj_dir, project_name);
+    }
+
+    if (std::filesystem::exists(proj_dir)) {
+      if (verbose) {
+        print(" -- Project already exists");
+      }
+
+      if (args.TestFlag(flags::FORCE)) {
+        if (verbose) {
+          print(" -- Forcing project creation");
+        }
+        std::filesystem::remove_all(proj_dir);
+      } else {
+        printerr(ErrorType::FILE_IO, "Project already exists");
+        return ExitCode::ERROR;
+      }
+    }
+
+    if (verbose) {
+      printfmt(" -- Creating project directory : {}", proj_dir);
+      printfmt(" -- Creating project source directory : {}", proj_dir + "/src");
+    }
+    std::filesystem::create_directory(proj_dir);
+    std::filesystem::create_directory(proj_dir + "/src");
+
+    if (verbose) {
+      print(" -- Creating build file");
+    }
+    std::ofstream build_file(proj_dir + "/" + project_name  + ".ylbld");
+    if (!build_file.is_open()) {
+      printerr(ErrorType::FILE_IO, "Failed to create build file");
+      return ExitCode::ERROR;
+    }
+
+
+    return ExitCode::OK;
+  }
+
+
+  YLC::BuildResult YLC::BuildProject(const Config& config , const ArgParser& args) {
+    bool verbose = args.TestFlag(flags::VERBOSE);
+    if (verbose) {
+      print(" -- Building project");
+    }
+
+    if (!config.project_name.has_value()) {
+      printerr(ErrorType::INVALID_ARGS, "No project name provided");
+      return { ExitCode::ERROR , IntermediateRepresentation() };
+    }
+
+    std::string project_name = config.project_name.value();
+    std::string directory = args.TestFlag(flags::DIRECTORY) ? 
+      args.GetArgs(flags::DIRECTORY).front() : project_name;
+
+    std::string build_file = directory + "/" + project_name + ".ylbld";
+    if (!std::filesystem::exists(build_file)) {
+      printerr(ErrorType::FILE_IO, fmtstr("Project at path {} does not exist" , build_file));
+      return { ExitCode::ERROR , IntermediateRepresentation() };
+    }
+
+    if (verbose) {
+      printfmt(" -- Build file : {}", build_file);
+    }
+
+    if (!std::filesystem::exists(build_file)) {
+      printerr(ErrorType::FILE_IO, "Build file does not exist");
+      return { ExitCode::ERROR , IntermediateRepresentation() };
+    }
+
+    if (verbose) {
+      print(" -- Building project");
+    }
+
+    Builder builder(args , directory , build_file);
+    auto ir = builder.Build();
+
+    if (!ir.valid) {
+      printerr(ErrorType::COMPILER, "Failed to build project");
+      return { ExitCode::ERROR , IntermediateRepresentation() };
+    }
+
+    if (verbose) {
+      print(" -- Intermediate Representation constructed");
+    }
+
+    print("=== Project built successfully ===");
+    
+    return { ExitCode::OK , ir };
+  }
+
+  YLC::CompileResult YLC::Compile(const IntermediateRepresentation& ir) {
+    print(" -- Compiling intermediate representation");
+    BytecodeCompiler compiler(ir.linked_table.value());
+
+    return { ExitCode::OK , Assembly() };
+  }
+
+  ExitCode YLC::Run(const IntermediateRepresentation& ir) {
+    Interpreter interpreter(ir);
+
+    print(" -- Running intermediate representation");
+    auto res = interpreter.Interpret();
+    print(" -- Execution complete");
+    return res;
+  }
+  
+  ExitCode YLC::Run(const Assembly& assembly) {
+    print(" -- Running assembly");
+    return ExitCode::OK;
   }
 
 } // namespace ylang

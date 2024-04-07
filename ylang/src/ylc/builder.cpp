@@ -258,6 +258,9 @@ namespace ylang {
       if (failed_files.size() > 0) {
         return;
       }
+
+      std::lock_guard<std::mutex> lock(parser_mutex);
+      ir.asts.push_back(ast);
     };
     
     std::vector<std::jthread> workers;

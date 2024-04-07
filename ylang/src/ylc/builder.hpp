@@ -7,23 +7,11 @@
 
 #include "preprocessor/preprocessor.hpp"
 #include "lexer/lexer.hpp"
-#include "ast/ast.hpp"
-#include "env/symbol_table.hpp"
+#include "compiler/intermediate_representation.hpp"
 #include "ylc/arg_parser.hpp"
-#include "ylc/dependency_graph.hpp"
 
 namespace ylang {
 
-  struct IntermediateRepresentation {
-    bool valid = false;
-    std::string project_name;
-
-    DependencyGraph graph;
-    std::vector<Ast> asts{};
-    std::vector<SymbolTable> symbol_tables{};
-
-    std::optional<SymbolTable> linked_table;
-  };
 
   class Builder {
     public:

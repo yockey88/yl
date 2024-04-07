@@ -218,9 +218,9 @@ namespace ylang {
       printfmt("  [{:#08x}]  {}" , addr.address , f.name);
       for (auto i = 0; i < f.parameters.size(); ++i) {
         const auto& p = f.parameters[i];
-        printfmt("    @p{}__{}__({} : {})" , i, f.name, p.name , p.type);
+        printfmt("    @p{}:{}:({} : {})" , i, f.name, p.name , p.type);
       }
-      printfmt("    @ret({}__({}))" , f.name, kValueStrings[f.return_type]);
+      printfmt("    @ret({}:({}))" , f.name, kValueStrings[f.return_type]);
     }
 
     printfmt(".struct-layouts");

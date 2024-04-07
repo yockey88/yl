@@ -61,7 +61,7 @@ namespace ylang {
 
     Stmt* body = new BlockStmt(ast.nodes);
 
-    Token name = Token(SourceLocation{} , TokenType::IDENTIFIER , fmtstr("yl__entry__{}" , tokens.src_name));
+    Token name = Token(SourceLocation{} , TokenType::IDENTIFIER , fmtstr("@ylfile({})" , tokens.src_name));
     Token ret_val = Token(SourceLocation{} , TokenType::I32 , "__result");
     ast.root = new FunctionStmt(name , std::vector<Token>{} , ret_val , body);
 
@@ -225,9 +225,13 @@ namespace ylang {
         Token param = Consume(TokenType::IDENTIFIER , "Expected identifier for function parameter");
         param.type = TokenType::UNKNOWN;
 
-        if (Match({ TokenType::COLON })) {
-          Token type = ConsumeType("Expected type after ':' for function parameter");
-          param.type = type.type;
+        Consume(TokenType::COLON , "Expected ':' after function parameter identifier");
+
+        Token type = ConsumeType("Expected type after ':' for function parameter");
+        param.type = type.type;
+
+        if (Match({ TokenType::OPEN_BRACKET })) {
+          Consume(TokenType::CLOSE_BRACKET , "Expected closing bracket for array type");
         }
 
         params.push_back(param);

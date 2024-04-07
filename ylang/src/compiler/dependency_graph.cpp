@@ -1,4 +1,4 @@
-#include "ylc/dependency_graph.hpp"
+#include "compiler/dependency_graph.hpp"
 
 #include "defines.hpp"
 #include "util/io.hpp"

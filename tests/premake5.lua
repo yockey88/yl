@@ -77,7 +77,28 @@ value_tests.components["spdlog"] = "%{wks.location}/external/spdlog"
 value_tests.components["ylang"] = "%{wks.location}/ylang/src"
 value_tests.components["gtest"] = "%{wks.location}/external/gtest/googletest/include"
 
+local env_tests = {}
+
+env_tests.name = "env_tests"
+env_tests.path = "./tests"
+env_tests.kind = "ConsoleApp"
+env_tests.cppdialect = "C++latest"
+
+env_tests.files = function()
+  files { "environment_tests/**.cpp" , "environment_tests/**.hpp" }
+end
+
+env_tests.include_dirs = function()
+  includedirs { "tests/environment_tests" }
+end
+
+env_tests.components = {}
+env_tests.components["spdlog"] = "%{wks.location}/external/spdlog"
+env_tests.components["ylang"] = "%{wks.location}/ylang/src"
+env_tests.components["gtest"] = "%{wks.location}/external/gtest/googletest/include"
+
 AddProject(compiler_tests)
 AddProject(lexer_tests)
 AddProject(parser_tests)
 AddProject(value_tests)
+AddProject(env_tests)

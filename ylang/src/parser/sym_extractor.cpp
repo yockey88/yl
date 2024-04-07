@@ -246,7 +246,7 @@ namespace ylang {
   void SymbolExtractor::Visit(FunctionStmt &stmt) {
     std::string sym_name = BuildScopeName(stmt.name.value);
 
-    FunctionSymbol &sym = table.DefineFunction(sym_name);
+    FunctionSymbol &sym = table.DefineFunction(stmt.name.value);
     sym.return_type = Value::GetType(stmt.type);
 
     for (auto &param : stmt.params) {
@@ -307,6 +307,7 @@ namespace ylang {
       }
     }
 
+    printfmt("Built scope name : {}", sym_name);
     return sym_name;
   }
   

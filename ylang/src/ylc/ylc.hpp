@@ -6,6 +6,8 @@
 #include "defines.hpp"
 
 #include "ylc/arg_parser.hpp"
+#include "ylc/builder.hpp"
+#include "compiler/assembly.hpp"
 
 namespace ylang {
   
@@ -43,6 +45,16 @@ namespace ylang {
     
       void PrintHelp(const std::string& help_more);
       void PrintVersion();
+  
+      typedef std::pair<ExitCode , IntermediateRepresentation> BuildResult;
+      typedef std::pair<ExitCode , Assembly> CompileResult;
+
+      static ExitCode CreateProject(const Config& config , const ArgParser& args);
+      static BuildResult BuildProject(const Config& config , const ArgParser& args);
+      static CompileResult Compile(const IntermediateRepresentation& ir);
+
+      static ExitCode Run(const IntermediateRepresentation& ir);
+      static ExitCode Run(const Assembly& assembly);
     };
 
 }; // namespace ylang

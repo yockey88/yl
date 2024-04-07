@@ -393,7 +393,6 @@ namespace ylang {
       Value val = env->Ref(field_start)->val;
       value_stack.push(val);
     }
-
   }
 
   void Executor::Visit(ExprStmt& stmt) {
@@ -444,7 +443,7 @@ namespace ylang {
 
         /// rename the callable to the variable being declared
         callable->name = stmt.name.value;
-        env->Define(callable);
+        // env->Define(callable);
       } else {
         throw InternalError("No value on stack while evaluating variable declaration");
       }
@@ -552,7 +551,6 @@ namespace ylang {
       } else {
         throw InterpreterError(fmtstr("Invalid value type for print statement : {}", value));
       }
-
     } else {
       throw InternalError("No value on stack while evaluating print statement");
     }
@@ -639,8 +637,15 @@ namespace ylang {
       env->Undefine(stmt.name.value);
     }
 
-    auto closure = Environment::CreateClosure(env);
+    auto closure = env->CreateClosure();
     Callable* callable = new Function(stmt , closure);
+
+    /// If returning a closure or a scope we need to not define it here but rather at the call site
+    if (returning) {
+      call_stack.push(callable);
+      return;
+    }
+
     env->Define(callable);
   }
 
@@ -766,11 +771,22 @@ namespace ylang {
   }
 
   ExitCode Interpreter::Interpret() {
+    FunctionSymbol* entry = interpretable.linked_table->RetrieveFunction("@ylfile(main)");
+
+    if (entry == nullptr) {
+      printerr(INTERPRETER , "No main function found");
+      return ExitCode::ERROR;
+    }
+
+    return ExitCode::OK;
+
     global_env = std::make_unique<Environment>();
     Executor emitter(this , global_env);
 
     try {
-        ast.root->Accept(emitter);
+      for (auto& ast : interpretable.asts) {
+        ast.Walk(emitter);
+      }
     } catch (const Return& e) {
       if (e.IsVoid()) {
         return ExitCode::OK;

@@ -395,10 +395,10 @@ namespace ylang {
     printfmt("============================");
   }
   
-  std::unique_ptr<Environment> Environment::CreateClosure(std::unique_ptr<Environment>& parent) {
+  std::unique_ptr<Environment> Environment::CreateClosure() {
     std::unique_ptr<Environment> env = std::make_unique<Environment>();
-    Scope* parent_temp = parent->current_scope;
-    if (parent->current_scope == nullptr) {
+    Scope* parent_temp = current_scope;
+    if (current_scope == nullptr) {
       throw InternalError("No scope to create closure from");
     }
 
@@ -437,9 +437,9 @@ namespace ylang {
           env->Define(var.name , var.val);
         }
       }
-      for (auto& callable : temp->callables) {
-        env->Define(callable->Clone());
-      }
+      // for (auto& callable : temp->callables) {
+      //   env->Define(callable->Clone());
+      // }
       temp = temp->child;
     }
 
